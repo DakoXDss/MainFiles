@@ -1,1 +1,36 @@
+local httpService = game:GetService("HttpService")
+
+-- Define keys inside the script
+local keys = {
+    ["16XZAKLIUKQL6BW2RC5"] = { expiration = 999999999999999999999999999999999999999999999999999999999999999 },
+    ["BGL7273EV6VVY4TCAHV"] = { expiration = 999999999999999999999999999999999999999999999999999999999999999 },
+    ["OPVV44NTGRBQOAMO1TE"] = { expiration = 999999999999999999999999999999999999999999999999999999999999999 }
+}
+
+-- Find the key dynamically from the executor
+local key
+for line in io.lines() do
+    key = line:match("local%s+key%s*=%s*\"(.-)\"")
+    if key then break end
+end
+
+if key then
+    if keys[key] then
+        local expiration = keys[key].expiration -- Check expiration timestamp
+        local currentTime = os.time()
+
+        if currentTime < expiration then
+            print("Key is valid and not expired. Loading script...")
+            local code = game:HttpGet("https://raw.githubusercontent.com/DakoXDss/VoidWare.gg-Beta/refs/heads/main/VoideWare.gg")
+            local func = loadstring(code)
+            func()
+        else
+            print("Key has expired.")
+        end
+    else
+        print("Invalid key.")
+    end
+else
+    print("No key found in executor.")
+end
 
