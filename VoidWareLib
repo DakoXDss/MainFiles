@@ -1,0 +1,563 @@
+
+-- Main library table
+local VoidWare = {}
+VoidWare.__index = VoidWare
+
+-- // SERVICES //
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+
+-- // ASSETS & CONFIG //
+local LOGO_ASSET_ID = "rbxassetid://131406666794933" -- IMPORTANT: Replace with your image ID
+local FONT = Enum.Font.GothamSemibold
+local THEME = {
+    Background = Color3.fromRGB(18, 18, 22),
+    Primary = Color3.fromRGB(25, 25, 30),
+    Secondary = Color3.fromRGB(40, 40, 48),
+    Accent = Color3.fromRGB(120, 100, 255),
+    Text = Color3.fromRGB(240, 240, 240),
+    TextSecondary = Color3.fromRGB(150, 150, 150),
+    Shadow = Color3.fromRGB(10, 10, 12),
+}
+
+-- Helper function for creating UI elements
+local function Create(className, properties)
+    local element = Instance.new(className)
+    for prop, value in pairs(properties or {}) do
+        element[prop] = value
+    end
+    return element
+end
+
+-- // --- KEY SYSTEM --- //
+function VoidWare:CreateKeySystem(correctKey, callback)
+    local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+    local keyGui = Create("ScreenGui", { Name = "VoidWareKeySystem", Parent = playerGui, ZIndexBehavior = Enum.ZIndexBehavior.Global })
+
+    local background = Create("Frame", { Parent = keyGui, Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = THEME.Background, BackgroundTransparency = 1 })
+    TweenService:Create(background, TweenInfo.new(0.5), { BackgroundTransparency = 0 }):Play()
+
+    local mainFrame = Create("Frame", {
+        Parent = background,
+        Size = UDim2.fromOffset(300, 180),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = THEME.Primary,
+        BorderSizePixel = 0
+    })
+    Create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = mainFrame })
+    Create("UIStroke", { Color = THEME.Secondary, Thickness = 1, Parent = mainFrame })
+
+    local title = Create("TextLabel", {
+        Parent = mainFrame,
+        Size = UDim2.new(1, 0, 0, 40),
+        Text = "Authentication Required",
+        Font = FONT, TextColor3 = THEME.Text, TextSize = 18,
+        BackgroundColor3 = THEME.Secondary, BorderSizePixel = 0
+    })
+    Create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = title })
+
+    local keyBox = Create("TextBox", {
+        Parent = mainFrame,
+        Size = UDim2.new(1, -40, 0, 35),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Font = FONT, TextColor3 = THEME.Text, TextSize = 14,
+        BackgroundColor3 = THEME.Background, PlaceholderText = "Enter Key...",
+        ClearTextOnFocus = false
+    })
+    Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = keyBox })
+
+    local submitButton = Create("TextButton", {
+        Parent = mainFrame,
+        Size = UDim2.new(1, -40, 0, 35),
+        Position = UDim2.new(0.5, 0, 1, -40),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Text = "Submit", Font = FONT, TextColor3 = THEME.Text, TextSize = 16,
+        BackgroundColor3 = THEME.Accent
+    })
+    Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = submitButton })
+
+    submitButton.MouseButton1Click:Connect(function()
+        if keyBox.Text == correctKey then
+            local fadeOut = TweenService:Create(background, TweenInfo.new(0.5), { BackgroundTransparency = 1 })
+            fadeOut:Play()
+            fadeOut.Completed:Connect(function()
+                keyGui:Destroy()
+                if callback then
+                    task.spawn(callback)
+                end
+            end)
+        else
+            -- Shake animation for incorrect key
+            local originalPos = mainFrame.Position
+            local tweenInfo = TweenInfo.new(0.05, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut, 4, true)
+            local tween = TweenService:Create(mainFrame, tweenInfo, { Position = originalPos + UDim2.fromOffset(5, 0) })
+            tween:Play()
+        end
+    end)
+end
+
+-- // --- LOADING SCREEN --- //
+function VoidWare.ShowLoadingScreen()
+    local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+    
+    local loadingGui = Create("ScreenGui", {
+        Name = "VoidWareLoading",
+        Parent = playerGui,
+        ZIndexBehavior = Enum.ZIndexBehavior.Global,
+        ResetOnSpawn = false
+    })
+
+    local background = Create("Frame", {
+        Name = "Background",
+        Parent = loadingGui,
+        BackgroundColor3 = THEME.Background,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 1, 0),
+    })
+    TweenService:Create(background, TweenInfo.new(0.5), {BackgroundTransparency = 0}):Play()
+
+    local logo = Create("ImageLabel", {
+        Name = "Logo",
+        Parent = background,
+        Image = LOGO_ASSET_ID,
+        BackgroundTransparency = 1,
+        Size = UDim2.fromOffset(128, 128),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, -20),
+    })
+
+    local title = Create("TextLabel", {
+        Name = "Title",
+        Parent = background,
+        Text = "VOID WARE",
+        Font = FONT,
+        TextColor3 = THEME.Text,
+        TextSize = 28,
+        BackgroundTransparency = 1,
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, 60),
+    })
+
+    local loadingBarFrame = Create("Frame", {
+        Name = "LoadingBarFrame",
+        Parent = background,
+        BackgroundColor3 = THEME.Primary,
+        BorderSizePixel = 0,
+        Size = UDim2.new(0, 200, 0, 8),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, 100),
+        ClipsDescendants = true,
+    })
+    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = loadingBarFrame })
+
+    local loadingBar = Create("Frame", {
+        Name = "LoadingBar",
+        Parent = loadingBarFrame,
+        BackgroundColor3 = THEME.Accent,
+        BorderSizePixel = 0,
+        Size = UDim2.new(0, 0, 1, 0),
+    })
+    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = loadingBar })
+
+    loadingBar:TweenSize(UDim2.new(1, 0, 1, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quint, 2, true)
+
+    task.wait(2.5)
+    
+    local fadeOut = TweenService:Create(background, TweenInfo.new(0.5), {BackgroundTransparency = 1})
+    fadeOut:Play()
+    
+    fadeOut.Completed:Connect(function()
+        loadingGui:Destroy()
+    end)
+    
+    return loadingGui
+end
+
+-- // --- MAIN WINDOW & SHADOW --- //
+function VoidWare.new(title)
+    local self = setmetatable({}, VoidWare)
+    local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+    self.Gui = Create("ScreenGui", { Name = "VoidWareGUI", Parent = playerGui, ZIndexBehavior = Enum.ZIndexBehavior.Global, ResetOnSpawn = false })
+
+    self.Shadow = Create("ImageLabel", {
+        Parent = self.Gui,
+        Name = "Shadow",
+        Size = UDim2.new(0, 520, 0, 370),
+        Position = UDim2.new(0.5, 0, 0.5, 5),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://2733903869",
+        ImageColor3 = THEME.Shadow,
+        ScaleType = Enum.ScaleType.Slice,
+        SliceCenter = Rect.new(10, 10, 118, 118),
+        Visible = false
+    })
+
+    self.Window = Create("Frame", {
+        Name = "Window",
+        Parent = self.Gui,
+        Size = UDim2.new(0, 500, 0, 350),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = THEME.Background,
+        BorderSizePixel = 0,
+        Visible = false
+    })
+    Create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = self.Window })
+    Create("UIStroke", { Color = THEME.Secondary, Thickness = 1, Parent = self.Window })
+
+    local header = Create("Frame", {
+        Name = "Header",
+        Parent = self.Window,
+        Size = UDim2.new(1, 0, 0, 40),
+        BackgroundColor3 = THEME.Primary,
+        BorderSizePixel = 0,
+    })
+    Create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = header })
+    Create("UIPadding", { Parent = header, PaddingLeft = UDim.new(0, 15), PaddingRight = UDim.new(0, 15) })
+
+    Create("TextLabel", {
+        Name = "Title",
+        Parent = header,
+        Text = title or "Void Ware",
+        Font = FONT, TextColor3 = THEME.Text, TextSize = 18,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 1, 0),
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    self.Container = Create("ScrollingFrame", {
+        Name = "Container",
+        Parent = self.Window,
+        Size = UDim2.new(1, 0, 1, -40),
+        Position = UDim2.new(0, 0, 0, 40),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        ScrollBarImageColor3 = THEME.Accent,
+        ScrollBarThickness = 4,
+    })
+    
+    Create("UIPadding", {
+        Parent = self.Container,
+        PaddingTop = UDim.new(0, 15), PaddingBottom = UDim.new(0, 15),
+        PaddingLeft = UDim.new(0, 15), PaddingRight = UDim.new(0, 15),
+    })
+    Create("UIListLayout", {
+        Parent = self.Container,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 10),
+    })
+
+    local dragging = false
+    local dragStart, startPos
+    header.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = {Window = self.Window.Position, Shadow = self.Shadow.Position}
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and dragging then
+            local delta = input.Position - dragStart
+            self.Window.Position = UDim2.new(startPos.Window.X.Scale, startPos.Window.X.Offset + delta.X, startPos.Window.Y.Scale, startPos.Window.Y.Offset + delta.Y)
+            self.Shadow.Position = UDim2.new(startPos.Shadow.X.Scale, startPos.Shadow.X.Offset + delta.X, startPos.Shadow.Y.Scale, startPos.Shadow.Y.Offset + delta.Y)
+        end
+    end)
+
+    self.Window.Size = UDim2.fromOffset(0, 0)
+    self.Shadow.Size = UDim2.fromOffset(0, 0)
+    self.Window.Visible = true
+    self.Shadow.Visible = true
+    self.Window:TweenSize(UDim2.new(0, 500, 0, 350), Enum.EasingDirection.Out, Enum.EasingStyle.Quint, 0.4, true)
+    self.Shadow:TweenSize(UDim2.new(0, 520, 0, 370), Enum.EasingDirection.Out, Enum.EasingStyle.Quint, 0.4, true)
+    
+    return self
+end
+
+function VoidWare:SetShadowColor(color)
+    if self.Shadow then
+        self.Shadow.ImageColor3 = color
+    end
+end
+
+-- // --- GUI ELEMENTS --- //
+
+function VoidWare:AddButton(text, callback)
+    local button = Create("TextButton", {
+        Name = "Button", Parent = self.Container,
+        Size = UDim2.new(1, 0, 0, 40),
+        BackgroundColor3 = THEME.Primary,
+        Text = text, Font = FONT, TextColor3 = THEME.Text, TextSize = 16,
+        AutoButtonColor = false,
+    })
+    Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = button })
+    Create("UIStroke", { Color = THEME.Secondary, Thickness = 1, Parent = button })
+
+    local ripple = Create("Frame", {
+        Parent = button, Size = UDim2.fromOffset(0, 0),
+        Position = UDim2.new(0.5, 0, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = THEME.Accent, BackgroundTransparency = 0.8,
+        BorderSizePixel = 0, ClipsDescendants = true, ZIndex = 2
+    })
+    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = ripple })
+
+    local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad)
+    button.MouseEnter:Connect(function() TweenService:Create(button, tweenInfo, { BackgroundColor3 = THEME.Secondary }):Play() end)
+    button.MouseLeave:Connect(function() TweenService:Create(button, tweenInfo, { BackgroundColor3 = THEME.Primary }):Play() end)
+    
+    button.MouseButton1Click:Connect(function()
+        local mousePos = UserInputService:GetMouseLocation()
+        local relativePos = mousePos - button.AbsolutePosition
+        ripple.Position = UDim2.fromOffset(relativePos.X, relativePos.Y)
+        ripple.Size = UDim2.fromOffset(0, 0)
+        ripple.BackgroundTransparency = 0.8
+        
+        local rippleAnim = TweenService:Create(ripple, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            Size = UDim2.fromOffset(button.AbsoluteSize.X * 1.5, button.AbsoluteSize.X * 1.5),
+            BackgroundTransparency = 1
+        })
+        rippleAnim:Play()
+        
+        if callback then task.spawn(callback) end
+    end)
+    
+    return button
+end
+
+function VoidWare:AddSlider(text, min, max, start, callback)
+    local sliderFrame = Create("Frame", {
+        Name = text .. "Slider", Parent = self.Container,
+        Size = UDim2.new(1, 0, 0, 50), BackgroundTransparency = 1,
+    })
+
+    Create("TextLabel", {
+        Parent = sliderFrame, Size = UDim2.new(0.5, 0, 0, 20),
+        Text = text, Font = FONT, TextColor3 = THEME.TextSecondary, TextSize = 14,
+        BackgroundTransparency = 1, TextXAlignment = Enum.TextXAlignment.Left,
+    })
+    
+    local valueLabel = Create("TextLabel", {
+        Parent = sliderFrame, Size = UDim2.new(0.5, 0, 0, 20),
+        Position = UDim2.new(0.5, 0, 0, 0), Text = tostring(start),
+        Font = FONT, TextColor3 = THEME.Text, TextSize = 14,
+        BackgroundTransparency = 1, TextXAlignment = Enum.TextXAlignment.Right,
+    })
+
+    local track = Create("Frame", {
+        Name = "Track", Parent = sliderFrame,
+        Size = UDim2.new(1, 0, 0, 8), Position = UDim2.new(0, 0, 0, 25),
+        BackgroundColor3 = THEME.Primary, BorderSizePixel = 0,
+    })
+    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = track })
+
+    local fill = Create("Frame", {
+        Name = "Fill", Parent = track, BackgroundColor3 = THEME.Accent,
+        BorderSizePixel = 0, Size = UDim2.new(0,0,1,0)
+    })
+    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = fill })
+
+    local thumb = Create("Frame", {
+        Name = "Thumb", Parent = track, Size = UDim2.fromOffset(16, 16),
+        AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 0, 0.5, 0),
+        BackgroundColor3 = THEME.Text, BorderSizePixel = 0,
+    })
+    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = thumb })
+    Create("UIStroke", { Color = THEME.Accent, Thickness = 2, Parent = thumb })
+    
+    local function UpdateSlider(value, isInstant)
+        local currentValue = math.clamp(value, min, max)
+        local percentage = (currentValue - min) / (max - min)
+        local tweenInfo = TweenInfo.new(isInstant and 0 or 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        
+        TweenService:Create(fill, tweenInfo, { Size = UDim2.new(percentage, 0, 1, 0) }):Play()
+        TweenService:Create(thumb, tweenInfo, { Position = UDim2.new(percentage, 0, 0.5, 0) }):Play()
+        
+        valueLabel.Text = string.format("%.2f", currentValue)
+        if callback then task.spawn(callback, currentValue) end
+    end
+    
+    UpdateSlider(start, true)
+    
+    local isDragging = false
+    track.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isDragging = true
+            local mouseX = UserInputService:GetMouseLocation().X
+            local percentage = math.clamp((mouseX - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+            UpdateSlider(min + (max - min) * percentage, true)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isDragging = false end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local mouseX = UserInputService:GetMouseLocation().X
+            local percentage = math.clamp((mouseX - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+            UpdateSlider(min + (max - min) * percentage)
+        end
+    end)
+
+    return sliderFrame
+end
+
+function VoidWare:AddToggle(text, startState, callback)
+    local toggleFrame = Create("Frame", {
+        Name = text .. "Toggle", Parent = self.Container,
+        Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1,
+    })
+    
+    Create("TextLabel", {
+        Parent = toggleFrame, Size = UDim2.new(1, -40, 1, 0),
+        Text = text, Font = FONT, TextColor3 = THEME.Text, TextSize = 14,
+        BackgroundTransparency = 1, TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local switch = Create("TextButton", {
+        Parent = toggleFrame, Size = UDim2.fromOffset(50, 20),
+        Position = UDim2.new(1, -50, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5),
+        BackgroundColor3 = startState and THEME.Accent or THEME.Primary, Text = ""
+    })
+    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = switch })
+    
+    local knob = Create("Frame", {
+        Parent = switch, Size = UDim2.fromOffset(16, 16),
+        Position = startState and UDim2.new(1, -10, 0.5, 0) or UDim2.new(0, 10, 0.5, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5), BackgroundColor3 = THEME.Text
+    })
+    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = knob })
+
+    local state = startState or false
+    switch.MouseButton1Click:Connect(function()
+        state = not state
+        local knobPos = state and UDim2.new(1, -10, 0.5, 0) or UDim2.new(0, 10, 0.5, 0)
+        local switchColor = state and THEME.Accent or THEME.Primary
+        
+        TweenService:Create(knob, TweenInfo.new(0.2), { Position = knobPos }):Play()
+        TweenService:Create(switch, TweenInfo.new(0.2), { BackgroundColor3 = switchColor }):Play()
+        
+        if callback then task.spawn(callback, state) end
+    end)
+    
+    return toggleFrame
+end
+
+function VoidWare:AddDropdown(text, options, callback)
+    local dropdownFrame = Create("Frame", {
+        Name = text .. "Dropdown", Parent = self.Container,
+        Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1, ClipsDescendants = true,
+    })
+    Create("UIListLayout", { Parent = dropdownFrame, SortOrder = Enum.SortOrder.LayoutOrder })
+
+    local mainButton = Create("TextButton", {
+        Parent = dropdownFrame, Size = UDim2.new(1, 0, 0, 40),
+        BackgroundColor3 = THEME.Primary, Text = "",
+    })
+    Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = mainButton })
+
+    local selectedLabel = Create("TextLabel", {
+        Parent = mainButton, Size = UDim2.new(1, -30, 1, 0), Position = UDim2.new(0, 15, 0, 0),
+        Text = options[1], Font = FONT, TextColor3 = THEME.Text, TextSize = 14,
+        BackgroundTransparency = 1, TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local arrow = Create("TextLabel", {
+        Parent = mainButton, Size = UDim2.fromOffset(20, 20), Position = UDim2.new(1, -25, 0.5, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5), Text = "▼", Font = FONT,
+        TextColor3 = THEME.TextSecondary, TextSize = 16, BackgroundTransparency = 1
+    })
+
+    local optionsFrame = Create("Frame", {
+        Parent = dropdownFrame, Size = UDim2.new(1, 0, 0, #options * 35),
+        BackgroundColor3 = THEME.Secondary, Visible = false
+    })
+    Create("UIListLayout", { Parent = optionsFrame, Padding = UDim.new(0, 5) })
+    Create("UIPadding", { Parent = optionsFrame, PaddingLeft = UDim.new(0, 5), PaddingRight = UDim.new(0, 5) })
+
+    for _, optionText in ipairs(options) do
+        local optionButton = Create("TextButton", {
+            Parent = optionsFrame, Size = UDim2.new(1, 0, 0, 30),
+            Text = optionText, Font = FONT, TextColor3 = THEME.Text, TextSize = 14,
+            BackgroundColor3 = THEME.Secondary, AutoButtonColor = false
+        })
+        optionButton.MouseEnter:Connect(function() optionButton.BackgroundColor3 = THEME.Accent end)
+        optionButton.MouseLeave:Connect(function() optionButton.BackgroundColor3 = THEME.Secondary end)
+        optionButton.MouseButton1Click:Connect(function()
+            selectedLabel.Text = optionText
+            if callback then task.spawn(callback, optionText) end
+        end)
+    end
+
+    local isOpen = false
+    mainButton.MouseButton1Click:Connect(function()
+        isOpen = not isOpen
+        optionsFrame.Visible = isOpen
+        local targetSize = isOpen and UDim2.new(1, 0, 0, 40 + #options * 35 + 10) or UDim2.new(1, 0, 0, 40)
+        TweenService:Create(dropdownFrame, TweenInfo.new(0.2), { Size = targetSize }):Play()
+        TweenService:Create(arrow, TweenInfo.new(0.2), { Rotation = isOpen and 180 or 0 }):Play()
+    end)
+    
+    return dropdownFrame
+end
+
+function VoidWare:AddColorPicker(text, startColor, callback)
+    local pickerFrame = Create("Frame", {
+        Name = text .. "ColorPicker", Parent = self.Container,
+        Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1
+    })
+
+    Create("TextLabel", {
+        Parent = pickerFrame, Size = UDim2.new(1, -50, 1, 0),
+        Text = text, Font = FONT, TextColor3 = THEME.Text, TextSize = 14,
+        BackgroundTransparency = 1, TextXAlignment = Enum.TextXAlignment.Left
+    })
+
+    local colorPreview = Create("Frame", {
+        Parent = pickerFrame, Size = UDim2.fromOffset(30, 30),
+        Position = UDim2.new(1, -35, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = startColor or Color3.new(1,1,1)
+    })
+    Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = colorPreview })
+    Create("UIStroke", { Color = THEME.Secondary, Parent = colorPreview })
+    
+    local colors = {
+        Color3.fromHex("FFFFFF"), Color3.fromHex("FF5C5C"), Color3.fromHex("5CFF78"),
+        Color3.fromHex("5CA8FF"), Color3.fromHex("FFD700"), THEME.Accent
+    }
+    local currentIndex = 1
+    
+    local button = Create("TextButton", { Parent = colorPreview, Size = UDim2.new(1,0,1,0), BackgroundTransparency = 1 })
+    
+    button.MouseButton1Click:Connect(function()
+        currentIndex = (currentIndex % #colors) + 1
+        local newColor = colors[currentIndex]
+        colorPreview.BackgroundColor3 = newColor
+        if callback then task.spawn(callback, newColor) end
+    end)
+
+    return pickerFrame
+end
+
+function VoidWare:AddDiscordButton(text, inviteCode)
+    local discordButton = self:AddButton(text, function()
+        if setclipboard then
+            setclipboard("https://discord.gg/" .. inviteCode)
+            print("Discord invite copied to clipboard: " .. inviteCode)
+        else
+            warn("setclipboard function not available in this executor.")
+        end
+    end)
+    return discordButton
+end
+
+return VoidWare
