@@ -5,7 +5,7 @@ Edited by xz#1111
 ]]
 -- // Load
 
-local startupArgs = ({...})[1] or {}
+local startupArgs = type(({...})[1]) == 'table' and ({...})[1] or {}
 
 if getgenv().library ~= nil then
     getgenv().library:Unload();
