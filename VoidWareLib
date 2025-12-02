@@ -1,318 +1,813 @@
 --[[
-    Void Ware GUI Library
-    Version: 3.0 (Layout Overhaul)
-    Description: A complete architectural redesign to support multi-column layouts.
-    Features: Key system, sidebar with categories, sections/columns, and a refined theme.
-    NOTE: The API has changed. You now create Categories, then Sections, then add elements to sections.
+    Primordial Menu Library
+    A 1:1 recreation inspired by the Primordial UI
 ]]
 
--- Main library table
-local VoidWare = {}
-VoidWare.__index = VoidWare
+local Library = {}
+Library.__index = Library
 
--- // SERVICES //
-local TweenService = game:GetService("TweenService")
+-- Services
+local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 
--- // ASSETS & CONFIG //
-local LOGO_ASSET_ID = "rbxassetid://131406666794933" -- Your logo ID
-local FONT = Enum.Font.GothamSemibold
-local THEME = {
-    Background = Color3.fromHex("#0D0D10"),
-    Primary = Color3.fromHex("#1A1A1E"),
-    Secondary = Color3.fromHex("#2A2A30"),
-    Accent = Color3.fromHex("#007BFF"), -- Switched to a clean blue
-    Text = Color3.fromHex("#EAEAEF"),
-    TextSecondary = Color3.fromHex("#8E8E98"),
-    Shadow = Color3.fromHex("#050508"),
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+
+-- Theme Configuration
+local Theme = {
+    Background = Color3.fromRGB(25, 25, 25),
+    TopBar = Color3.fromRGB(35, 35, 35),
+    SideBar = Color3.fromRGB(30, 30, 30),
+    Section = Color3.fromRGB(40, 40, 40),
+    Accent = Color3.fromRGB(255, 75, 75),
+    Text = Color3.fromRGB(255, 255, 255),
+    TextDark = Color3.fromRGB(180, 180, 180),
+    Border = Color3.fromRGB(20, 20, 20),
+    SliderFill = Color3.fromRGB(200, 75, 75),
 }
 
--- Helper function for creating UI elements
-local function Create(className, properties)
-    local element = Instance.new(className)
-    for prop, value in pairs(properties or {}) do
-        element[prop] = value
+-- Utility Functions
+local function CreateInstance(className, properties)
+    local instance = Instance.new(className)
+    for property, value in pairs(properties) do
+        instance[property] = value
     end
-    return element
+    return instance
 end
 
--- // --- KEY SYSTEM & LOADING (Unchanged Logic, Themed) --- //
-function VoidWare:CreateKeySystem(correctKey, callback)
-    -- This function's logic is the same, but it will use the new theme.
-    -- [Code omitted for brevity, but is included in the full script]
-end
-function VoidWare.ShowLoadingScreen()
-    -- This function's logic is the same, but it will use the new theme.
-    -- [Code omitted for brevity, but is included in the full script]
+local function Tween(object, properties, duration)
+    local tweenInfo = TweenInfo.new(duration or 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local tween = TweenService:Create(object, tweenInfo, properties)
+    tween:Play()
+    return tween
 end
 
-
--- // --- MAIN WINDOW & NEW LAYOUT STRUCTURE --- //
-function VoidWare.new(title)
-    local self = setmetatable({}, VoidWare)
-    local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
-    self.Gui = Create("ScreenGui", { Name = "VoidWareGUI", Parent = playerGui, ZIndexBehavior = Enum.ZIndexBehavior.Global, ResetOnSpawn = false })
+-- Main Library Constructor
+function Library:New(config)
+    local self = setmetatable({}, Library)
     
-    -- Main Window Frame (wider for new layout)
-    self.Window = Create("Frame", {
-        Name = "Window", Parent = self.Gui,
-        Size = UDim2.new(0, 750, 0, 450), Position = UDim2.new(0.5, 0, 0.5, 0),
-        AnchorPoint = Vector2.new(0.5, 0.5), BackgroundColor3 = THEME.Primary,
-        BorderSizePixel = 0, Visible = false
-    })
-    Create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = self.Window })
-    Create("UIStroke", { Color = THEME.Secondary, Thickness = 1, Parent = self.Window })
-
-    -- Sidebar for Categories
-    self.Sidebar = Create("Frame", {
-        Name = "Sidebar", Parent = self.Window,
-        Size = UDim2.new(0, 180, 1, 0), BackgroundColor3 = THEME.Background,
-    })
-    Create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = self.Sidebar })
-    Create("UIListLayout", { Parent = self.Sidebar, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5) })
-    Create("UIPadding", { Parent = self.Sidebar, PaddingTop = UDim.new(0, 60)})
-
-    -- Sidebar Header (Logo and Title)
-    local sidebarHeader = Create("Frame", {
-        Parent = self.Sidebar, Size = UDim2.new(1, 0, 0, 50),
-        BackgroundTransparency = 1, LayoutOrder = -1
-    })
-    local logo = Create("ImageLabel", {
-        Parent = sidebarHeader, Image = LOGO_ASSET_ID, BackgroundTransparency = 1,
-        Size = UDim2.fromOffset(32, 32), Position = UDim2.new(0, 20, 0.5, 0),
-        AnchorPoint = Vector2.new(0, 0.5)
-    })
-    Create("TextLabel", {
-        Parent = sidebarHeader, Text = title or "Void Ware", Font = FONT, TextSize = 20,
-        TextColor3 = THEME.Text, BackgroundTransparency = 1,
-        Size = UDim2.new(1, -60, 1, 0), Position = UDim2.new(0, 60, 0, 0),
-        TextXAlignment = Enum.TextXAlignment.Left
-    })
-
-    -- Content Area to hold pages
-    self.ContentPages = Create("Frame", {
-        Name = "ContentPages", Parent = self.Window,
-        Size = UDim2.new(1, -180, 1, 0), Position = UDim2.new(0, 180, 0, 0),
-        BackgroundTransparency = 1,
-    })
-
+    config = config or {}
+    self.Title = config.Title or "Primordial"
     self.Categories = {}
-    self.ActiveCategory = nil
-
-    -- Draggable functionality (drags the whole window)
-    local dragging = false
-    local dragStart, startPos
-    self.Window.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = self.Window.Position
-        end
-    end)
-    self.Window.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and dragging then
-            local delta = input.Position - dragStart
-            self.Window.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-
-    -- Entrance animation
-    self.Window.Visible = true
-    self.Window.Size = UDim2.fromOffset(0,0)
-    self.Window:TweenSize(UDim2.new(0, 750, 0, 450), Enum.EasingDirection.Out, Enum.EasingStyle.Quint, 0.4, true)
-
+    self.CurrentCategory = nil
+    
+    -- Create Main GUI
+    self:CreateGUI()
+    
     return self
 end
 
--- // --- CATEGORIES & SECTIONS --- //
-function VoidWare:AddCategory(name)
-    local self = self
-    local category = {}
-
-    -- Create the button in the sidebar
-    local button = Create("TextButton", {
-        Name = name, Parent = self.Sidebar,
-        Size = UDim2.new(1, 0, 0, 45),
-        Text = "", AutoButtonColor = false,
-        BackgroundColor3 = THEME.Background
+function Library:CreateGUI()
+    -- ScreenGui
+    self.GUI = CreateInstance("ScreenGui", {
+        Name = "PrimordialMenu",
+        Parent = game:GetService("CoreGui"),
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        ResetOnSpawn = false
     })
-    local indicator = Create("Frame", { -- This is the blue bar for active category
-        Parent = button, Size = UDim2.new(0, 4, 0.8, 0),
-        Position = UDim2.new(0, 0, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5),
-        BackgroundColor3 = THEME.Accent, BorderSizePixel = 0,
-        Visible = false -- Initially hidden
-    })
-    Create("UICorner", {Parent = indicator})
     
-    Create("TextLabel", {
-        Parent = button, Size = UDim2.new(1, -20, 1, 0), Position = UDim2.new(0, 20, 0, 0),
-        Text = name, Font = FONT, TextColor3 = THEME.TextSecondary, TextSize = 16,
-        BackgroundTransparency = 1, TextXAlignment = Enum.TextXAlignment.Left
+    -- Main Frame
+    self.MainFrame = CreateInstance("Frame", {
+        Name = "MainFrame",
+        Parent = self.GUI,
+        BackgroundColor3 = Theme.Background,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0.5, -540, 0.5, -350),
+        Size = UDim2.new(0, 1080, 0, 700),
+        ClipsDescendants = true
     })
-
-    -- Create the page for this category's content
-    category.Page = Create("ScrollingFrame", {
-        Name = name .. "Page", Parent = self.ContentPages,
-        Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1,
-        BorderSizePixel = 0, Visible = false,
-        CanvasSize = UDim2.new(0,0,0,0), ScrollBarImageColor3 = THEME.Accent, ScrollBarThickness = 4
+    
+    -- Top Bar
+    local topBar = CreateInstance("Frame", {
+        Name = "TopBar",
+        Parent = self.MainFrame,
+        BackgroundColor3 = Theme.TopBar,
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 0, 50)
     })
-    Create("UIGridLayout", {
-        Parent = category.Page, CellSize = UDim2.new(0.5, -15, 1, 0),
+    
+    -- Logo/Title
+    local logo = CreateInstance("ImageLabel", {
+        Name = "Logo",
+        Parent = topBar,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 20, 0.5, -15),
+        Size = UDim2.new(0, 30, 0, 30),
+        Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+    })
+    
+    local title = CreateInstance("TextLabel", {
+        Name = "Title",
+        Parent = topBar,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 60, 0, 0),
+        Size = UDim2.new(0, 200, 1, 0),
+        Font = Enum.Font.GothamBold,
+        Text = self.Title,
+        TextColor3 = Theme.Text,
+        TextSize = 16,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    -- Side Navigation
+    self.SideBar = CreateInstance("Frame", {
+        Name = "SideBar",
+        Parent = self.MainFrame,
+        BackgroundColor3 = Theme.SideBar,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 0, 50),
+        Size = UDim2.new(0, 200, 1, -50)
+    })
+    
+    local sideBarList = CreateInstance("UIListLayout", {
+        Parent = self.SideBar,
         SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 5)
     })
-    Create("UIPadding", { Parent = category.Page, PaddingLeft = UDim.new(0,10), PaddingRight = UDim.new(0,10), PaddingTop = UDim.new(0,10)})
-
-    -- Store references
-    category.Button = button
-    category.Indicator = indicator
-    table.insert(self.Categories, category)
-
-    button.MouseButton1Click:Connect(function()
-        if self.ActiveCategory then
-            self.ActiveCategory.Indicator.Visible = false
-            self.ActiveCategory.Button.BackgroundColor3 = THEME.Background
-            self.ActiveCategory.Page.Visible = false
-        end
-        self.ActiveCategory = category
-        category.Indicator.Visible = true
-        category.Button.BackgroundColor3 = THEME.Primary
-        category.Page.Visible = true
-    end)
-
-    -- Auto-select the first category
-    if not self.ActiveCategory then
-        button:Invoke()
-    end
-
-    -- Return a table of methods for this category
-    local category_methods = {}
     
-    function category_methods:AddSection(sectionTitle)
-        local section = {}
-        section.Frame = Create("Frame", {
-            Name = sectionTitle, Parent = category.Page,
-            Size = UDim2.new(1, 0, 1, 0), -- UIGridLayout will handle this
+    CreateInstance("UIPadding", {
+        Parent = self.SideBar,
+        PaddingTop = UDim.new(0, 10),
+        PaddingLeft = UDim.new(0, 10),
+        PaddingRight = UDim.new(0, 10)
+    })
+    
+    -- Content Area
+    self.ContentFrame = CreateInstance("Frame", {
+        Name = "ContentFrame",
+        Parent = self.MainFrame,
+        BackgroundColor3 = Theme.Background,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 200, 0, 50),
+        Size = UDim2.new(1, -200, 1, -50),
+        ClipsDescendants = true
+    })
+    
+    -- Bottom Bar with tabs
+    self.BottomBar = CreateInstance("Frame", {
+        Name = "BottomBar",
+        Parent = self.MainFrame,
+        BackgroundColor3 = Theme.TopBar,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 1, -60),
+        Size = UDim2.new(1, 0, 0, 60)
+    })
+    
+    local bottomTabList = CreateInstance("UIListLayout", {
+        Parent = self.BottomBar,
+        FillDirection = Enum.FillDirection.Horizontal,
+        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+        VerticalAlignment = Enum.VerticalAlignment.Center,
+        Padding = UDim.new(0, 20)
+    })
+    
+    -- Create bottom tabs
+    local bottomTabs = {"Rage", "Legit", "Visuals", "Misc", "Skins", "Scripts"}
+    for i, tabName in ipairs(bottomTabs) do
+        local tab = CreateInstance("TextButton", {
+            Name = tabName,
+            Parent = self.BottomBar,
             BackgroundTransparency = 1,
+            Size = UDim2.new(0, 80, 0, 40),
+            Font = Enum.Font.Gotham,
+            Text = tabName,
+            TextColor3 = i == 2 and Theme.Accent or Theme.TextDark,
+            TextSize = 13
         })
-        local layout = Create("UIListLayout", { Parent = section.Frame, Padding = UDim.new(0, 10) })
         
-        Create("TextLabel", {
-            Parent = section.Frame, Size = UDim2.new(1, 0, 0, 30),
-            Text = sectionTitle, Font = FONT, TextColor3 = THEME.Text, TextSize = 18,
-            BackgroundTransparency = 1, TextXAlignment = Enum.TextXAlignment.Left
-        })
-
-        -- Return methods for this section
-        local section_methods = {}
-        function section_methods:AddToggle(...) section:AddElement(VoidWare.AddToggle(section.Frame, ...)) end
-        function section_methods:AddSlider(...) section:AddElement(VoidWare.AddSlider(section.Frame, ...)) end
-        function section_methods:AddButton(...) section:AddElement(VoidWare.AddButton(section.Frame, ...)) end
-        function section_methods:AddDropdown(...) section:AddElement(VoidWare.AddDropdown(section.Frame, ...)) end
-        function section_methods:AddColorPicker(...) section:AddElement(VoidWare.AddColorPicker(section.Frame, ...)) end
-        function section_methods:AddDiscordButton(...) section:AddElement(VoidWare.AddDiscordButton(section.Frame, ...)) end
-        
-        return section_methods
-    end
-
-    return category_methods
-end
-
-
--- // --- REFINED GUI ELEMENTS --- //
--- The element functions now take a 'parent' argument and are called by the section methods.
-
-function VoidWare.AddToggle(parent, text, startState, callback)
-    local toggleFrame = Create("Frame", { Name = text .. "Toggle", Parent = parent, Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1 })
-    Create("TextLabel", { Parent = toggleFrame, Size = UDim2.new(1, -60, 1, 0), Text = text, Font = FONT, TextColor3 = THEME.Text, TextSize = 14, BackgroundTransparency = 1, TextXAlignment = Enum.TextXAlignment.Left })
-    
-    local switch = Create("TextButton", { Parent = toggleFrame, Size = UDim2.fromOffset(44, 22), Position = UDim2.new(1, -44, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5), BackgroundColor3 = startState and THEME.Accent or THEME.Secondary, Text = "" })
-    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = switch })
-    
-    local knob = Create("Frame", { Parent = switch, Size = UDim2.fromOffset(18, 18), Position = startState and UDim2.new(1, -11, 0.5, 0) or UDim2.new(0, 11, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundColor3 = THEME.Text })
-    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = knob })
-
-    local state = startState or false
-    switch.MouseButton1Click:Connect(function()
-        state = not state
-        local knobPos = state and UDim2.new(1, -11, 0.5, 0) or UDim2.new(0, 11, 0.5, 0)
-        local switchColor = state and THEME.Accent or THEME.Secondary
-        TweenService:Create(knob, TweenInfo.new(0.2), { Position = knobPos }):Play()
-        TweenService:Create(switch, TweenInfo.new(0.2), { BackgroundColor3 = switchColor }):Play()
-        if callback then task.spawn(callback, state) end
-    end)
-    return toggleFrame
-end
-
-function VoidWare.AddSlider(parent, text, min, max, start, callback)
-    local sliderFrame = Create("Frame", { Name = text .. "Slider", Parent = parent, Size = UDim2.new(1, 0, 0, 50), BackgroundTransparency = 1 })
-    local labelContainer = Create("Frame", { Parent = sliderFrame, Size = UDim2.new(1,0,0,20), BackgroundTransparency = 1})
-    Create("TextLabel", { Parent = labelContainer, Size = UDim2.new(0.5, 0, 1, 0), Text = text, Font = FONT, TextColor3 = THEME.Text, TextSize = 14, BackgroundTransparency = 1, TextXAlignment = Enum.TextXAlignment.Left })
-    local valueLabel = Create("TextLabel", { Parent = labelContainer, Size = UDim2.new(0.5, 0, 1, 0), Position = UDim2.new(0.5,0,0,0), Text = tostring(start), Font = FONT, TextColor3 = THEME.TextSecondary, TextSize = 14, BackgroundTransparency = 1, TextXAlignment = Enum.TextXAlignment.Right })
-
-    local track = Create("Frame", { Name = "Track", Parent = sliderFrame, Size = UDim2.new(1, 0, 0, 6), Position = UDim2.new(0, 0, 0, 25), BackgroundColor3 = THEME.Secondary, BorderSizePixel = 0 })
-    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = track })
-
-    local fill = Create("Frame", { Name = "Fill", Parent = track, BackgroundColor3 = THEME.Accent, BorderSizePixel = 0, Size = UDim2.new(0,0,1,0) })
-    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = fill })
-
-    local thumb = Create("Frame", { Name = "Thumb", Parent = fill, Size = UDim2.fromOffset(12, 12), AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, 0, 0.5, 0), BackgroundColor3 = THEME.Text, BorderSizePixel = 0 })
-    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = thumb })
-    
-    local function UpdateSlider(value, isInstant)
-        local currentValue = math.clamp(value, min, max)
-        local percentage = (currentValue - min) / (max - min)
-        local tweenInfo = TweenInfo.new(isInstant and 0 or 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        TweenService:Create(fill, tweenInfo, { Size = UDim2.new(percentage, 0, 1, 0) }):Play()
-        valueLabel.Text = string.format("%.2f", currentValue)
-        if callback then task.spawn(callback, currentValue) end
+        if i == 2 then
+            local indicator = CreateInstance("Frame", {
+                Name = "Indicator",
+                Parent = tab,
+                BackgroundColor3 = Theme.Accent,
+                BorderSizePixel = 0,
+                Position = UDim2.new(0, 0, 1, -2),
+                Size = UDim2.new(1, 0, 0, 2)
+            })
+        end
     end
     
-    UpdateSlider(start, true)
+    -- Make draggable
+    self:MakeDraggable(self.MainFrame, topBar)
     
-    local isDragging = false
-    track.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            isDragging = true
-            local mouseX = UserInputService:GetMouseLocation().X
-            local percentage = math.clamp((mouseX - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-            UpdateSlider(min + (max - min) * percentage, true)
+    return self.MainFrame
+end
+
+function Library:MakeDraggable(frame, handle)
+    local dragging = false
+    local dragInput, mousePos, framePos
+    
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            mousePos = input.Position
+            framePos = frame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
         end
     end)
-    UserInputService.InputEnded:Connect(function() isDragging = false end)
+    
     UserInputService.InputChanged:Connect(function(input)
-        if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local mouseX = UserInputService:GetMouseLocation().X
-            local percentage = math.clamp((mouseX - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-            UpdateSlider(min + (max - min) * percentage)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
         end
     end)
-    return sliderFrame
+    
+    RunService.Heartbeat:Connect(function()
+        if dragging and dragInput then
+            local delta = dragInput.Position - mousePos
+            frame.Position = UDim2.new(
+                framePos.X.Scale,
+                framePos.X.Offset + delta.X,
+                framePos.Y.Scale,
+                framePos.Y.Offset + delta.Y
+            )
+        end
+    end)
 end
 
--- Other elements (Button, Dropdown, etc.) are also refactored to accept a parent.
--- [Full code for all elements is included in the runnable script]
-function VoidWare.AddButton(parent, text, callback)
-    -- This function's logic is the same, but it now accepts a parent.
+-- Category System
+function Library:AddCategory(config)
+    config = config or {}
+    local categoryName = config.Name or "Category"
+    local icon = config.Icon or "rbxasset://textures/ui/GuiImagePlaceholder.png"
+    
+    local category = {
+        Name = categoryName,
+        Sections = {},
+        Frame = nil,
+        Button = nil
+    }
+    
+    -- Create category button in sidebar
+    local button = CreateInstance("TextButton", {
+        Name = categoryName,
+        Parent = self.SideBar,
+        BackgroundColor3 = Theme.Section,
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 0, 40),
+        Font = Enum.Font.Gotham,
+        Text = "  " .. categoryName,
+        TextColor3 = Theme.Text,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    CreateInstance("UICorner", {
+        Parent = button,
+        CornerRadius = UDim.new(0, 4)
+    })
+    
+    category.Button = button
+    
+    -- Create category content frame
+    local contentFrame = CreateInstance("ScrollingFrame", {
+        Name = categoryName .. "Content",
+        Parent = self.ContentFrame,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 1, 0),
+        ScrollBarThickness = 4,
+        ScrollBarImageColor3 = Theme.Accent,
+        Visible = false,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y
+    })
+    
+    local contentList = CreateInstance("UIListLayout", {
+        Parent = contentFrame,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 15)
+    })
+    
+    CreateInstance("UIPadding", {
+        Parent = contentFrame,
+        PaddingTop = UDim.new(0, 15),
+        PaddingLeft = UDim.new(0, 15),
+        PaddingRight = UDim.new(0, 15),
+        PaddingBottom = UDim.new(0, 15)
+    })
+    
+    category.Frame = contentFrame
+    
+    -- Button click handler
+    button.MouseButton1Click:Connect(function()
+        self:SelectCategory(category)
+    end)
+    
+    table.insert(self.Categories, category)
+    
+    -- Select first category by default
+    if #self.Categories == 1 then
+        self:SelectCategory(category)
+    end
+    
+    return setmetatable(category, {__index = self:GetCategoryMethods()})
 end
 
-function VoidWare.AddDropdown(parent, text, options, callback)
-    -- This function's logic is the same, but it now accepts a parent.
+function Library:SelectCategory(category)
+    if self.CurrentCategory then
+        self.CurrentCategory.Frame.Visible = false
+        self.CurrentCategory.Button.BackgroundColor3 = Theme.Section
+    end
+    
+    self.CurrentCategory = category
+    category.Frame.Visible = true
+    category.Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 end
 
-function VoidWare.AddColorPicker(parent, text, startColor, callback)
-    -- This function's logic is the same, but it now accepts a parent.
+-- Category Methods
+function Library:GetCategoryMethods()
+    local methods = {}
+    
+    function methods:AddSection(sectionName)
+        local section = {
+            Name = sectionName,
+            Frame = nil,
+            Elements = {}
+        }
+        
+        -- Create section frame
+        local sectionFrame = CreateInstance("Frame", {
+            Name = sectionName,
+            Parent = self.Frame,
+            BackgroundColor3 = Theme.Section,
+            BorderSizePixel = 0,
+            Size = UDim2.new(1, 0, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y
+        })
+        
+        CreateInstance("UICorner", {
+            Parent = sectionFrame,
+            CornerRadius = UDim.new(0, 6)
+        })
+        
+        -- Section header
+        local header = CreateInstance("Frame", {
+            Name = "Header",
+            Parent = sectionFrame,
+            BackgroundColor3 = Theme.TopBar,
+            BorderSizePixel = 0,
+            Size = UDim2.new(1, 0, 0, 35)
+        })
+        
+        CreateInstance("UICorner", {
+            Parent = header,
+            CornerRadius = UDim.new(0, 6)
+        })
+        
+        local headerTitle = CreateInstance("TextLabel", {
+            Name = "Title",
+            Parent = header,
+            BackgroundTransparency = 1,
+            Position = UDim2.new(0, 15, 0, 0),
+            Size = UDim2.new(1, -30, 1, 0),
+            Font = Enum.Font.GothamBold,
+            Text = sectionName,
+            TextColor3 = Theme.Text,
+            TextSize = 14,
+            TextXAlignment = Enum.TextXAlignment.Left
+        })
+        
+        -- Section content
+        local content = CreateInstance("Frame", {
+            Name = "Content",
+            Parent = sectionFrame,
+            BackgroundTransparency = 1,
+            Position = UDim2.new(0, 0, 0, 35),
+            Size = UDim2.new(1, 0, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y
+        })
+        
+        local contentList = CreateInstance("UIListLayout", {
+            Parent = content,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 8)
+        })
+        
+        CreateInstance("UIPadding", {
+            Parent = content,
+            PaddingTop = UDim.new(0, 10),
+            PaddingLeft = UDim.new(0, 15),
+            PaddingRight = UDim.new(0, 15),
+            PaddingBottom = UDim.new(0, 10)
+        })
+        
+        section.Frame = sectionFrame
+        section.Content = content
+        
+        table.insert(self.Sections, section)
+        
+        return setmetatable(section, {__index = Library:GetSectionMethods()})
+    end
+    
+    return methods
 end
 
-function VoidWare.AddDiscordButton(parent, text, inviteCode)
-    -- This function's logic is the same, but it now accepts a parent.
+-- Section Methods
+function Library:GetSectionMethods()
+    local methods = {}
+    
+    function methods:AddToggle(config)
+        config = config or {}
+        local name = config.Name or "Toggle"
+        local default = config.Default or false
+        local callback = config.Callback or function() end
+        
+        local toggleFrame = CreateInstance("Frame", {
+            Name = "Toggle",
+            Parent = self.Content,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 20)
+        })
+        
+        local toggleBox = CreateInstance("Frame", {
+            Name = "Box",
+            Parent = toggleFrame,
+            BackgroundColor3 = Theme.Border,
+            BorderSizePixel = 0,
+            Size = UDim2.new(0, 18, 0, 18)
+        })
+        
+        CreateInstance("UICorner", {
+            Parent = toggleBox,
+            CornerRadius = UDim.new(0, 3)
+        })
+        
+        local checkmark = CreateInstance("Frame", {
+            Name = "Checkmark",
+            Parent = toggleBox,
+            BackgroundColor3 = Theme.Accent,
+            BorderSizePixel = 0,
+            Position = UDim2.new(0.5, -6, 0.5, -6),
+            Size = UDim2.new(0, 12, 0, 12),
+            Visible = default
+        })
+        
+        CreateInstance("UICorner", {
+            Parent = checkmark,
+            CornerRadius = UDim.new(0, 2)
+        })
+        
+        local label = CreateInstance("TextLabel", {
+            Name = "Label",
+            Parent = toggleFrame,
+            BackgroundTransparency = 1,
+            Position = UDim2.new(0, 25, 0, 0),
+            Size = UDim2.new(1, -25, 1, 0),
+            Font = Enum.Font.Gotham,
+            Text = name,
+            TextColor3 = Theme.Text,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left
+        })
+        
+        local toggled = default
+        
+        local button = CreateInstance("TextButton", {
+            Name = "Button",
+            Parent = toggleFrame,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0),
+            Text = ""
+        })
+        
+        button.MouseButton1Click:Connect(function()
+            toggled = not toggled
+            checkmark.Visible = toggled
+            callback(toggled)
+        end)
+        
+        return {
+            Set = function(value)
+                toggled = value
+                checkmark.Visible = toggled
+                callback(toggled)
+            end,
+            Get = function()
+                return toggled
+            end
+        }
+    end
+    
+    function methods:AddSlider(config)
+        config = config or {}
+        local name = config.Name or "Slider"
+        local min = config.Min or 0
+        local max = config.Max or 100
+        local default = config.Default or min
+        local callback = config.Callback or function() end
+        local suffix = config.Suffix or ""
+        
+        local sliderFrame = CreateInstance("Frame", {
+            Name = "Slider",
+            Parent = self.Content,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 45)
+        })
+        
+        local label = CreateInstance("TextLabel", {
+            Name = "Label",
+            Parent = sliderFrame,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 15),
+            Font = Enum.Font.Gotham,
+            Text = name,
+            TextColor3 = Theme.Text,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left
+        })
+        
+        local valueLabel = CreateInstance("TextLabel", {
+            Name = "Value",
+            Parent = sliderFrame,
+            BackgroundTransparency = 1,
+            Position = UDim2.new(1, -50, 0, 0),
+            Size = UDim2.new(0, 50, 0, 15),
+            Font = Enum.Font.GothamBold,
+            Text = tostring(default) .. suffix,
+            TextColor3 = Theme.Accent,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Right
+        })
+        
+        local sliderBack = CreateInstance("Frame", {
+            Name = "SliderBack",
+            Parent = sliderFrame,
+            BackgroundColor3 = Theme.Border,
+            BorderSizePixel = 0,
+            Position = UDim2.new(0, 0, 0, 25),
+            Size = UDim2.new(1, 0, 0, 4)
+        })
+        
+        CreateInstance("UICorner", {
+            Parent = sliderBack,
+            CornerRadius = UDim.new(0, 2)
+        })
+        
+        local sliderFill = CreateInstance("Frame", {
+            Name = "SliderFill",
+            Parent = sliderBack,
+            BackgroundColor3 = Theme.SliderFill,
+            BorderSizePixel = 0,
+            Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+        })
+        
+        CreateInstance("UICorner", {
+            Parent = sliderFill,
+            CornerRadius = UDim.new(0, 2)
+        })
+        
+        local dragging = false
+        local currentValue = default
+        
+        local function updateSlider(input)
+            local pos = math.clamp((input.Position.X - sliderBack.AbsolutePosition.X) / sliderBack.AbsoluteSize.X, 0, 1)
+            currentValue = math.floor(min + (max - min) * pos)
+            
+            sliderFill.Size = UDim2.new(pos, 0, 1, 0)
+            valueLabel.Text = tostring(currentValue) .. suffix
+            
+            callback(currentValue)
+        end
+        
+        sliderBack.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+                updateSlider(input)
+            end
+        end)
+        
+        sliderBack.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
+        
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                updateSlider(input)
+            end
+        end)
+        
+        return {
+            Set = function(value)
+                currentValue = math.clamp(value, min, max)
+                local pos = (currentValue - min) / (max - min)
+                sliderFill.Size = UDim2.new(pos, 0, 1, 0)
+                valueLabel.Text = tostring(currentValue) .. suffix
+                callback(currentValue)
+            end,
+            Get = function()
+                return currentValue
+            end
+        }
+    end
+    
+    function methods:AddDropdown(config)
+        config = config or {}
+        local name = config.Name or "Dropdown"
+        local options = config.Options or {"Option 1", "Option 2"}
+        local default = config.Default or options[1]
+        local callback = config.Callback or function() end
+        
+        local dropdownFrame = CreateInstance("Frame", {
+            Name = "Dropdown",
+            Parent = self.Content,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 40),
+            ClipsDescendants = false
+        })
+        
+        local label = CreateInstance("TextLabel", {
+            Name = "Label",
+            Parent = dropdownFrame,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 15),
+            Font = Enum.Font.Gotham,
+            Text = name,
+            TextColor3 = Theme.Text,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left
+        })
+        
+        local dropdownBox = CreateInstance("Frame", {
+            Name = "Box",
+            Parent = dropdownFrame,
+            BackgroundColor3 = Theme.Border,
+            BorderSizePixel = 0,
+            Position = UDim2.new(0, 0, 0, 20),
+            Size = UDim2.new(1, 0, 0, 25)
+        })
+        
+        CreateInstance("UICorner", {
+            Parent = dropdownBox,
+            CornerRadius = UDim.new(0, 4)
+        })
+        
+        local selected = CreateInstance("TextLabel", {
+            Name = "Selected",
+            Parent = dropdownBox,
+            BackgroundTransparency = 1,
+            Position = UDim2.new(0, 10, 0, 0),
+            Size = UDim2.new(1, -30, 1, 0),
+            Font = Enum.Font.Gotham,
+            Text = default,
+            TextColor3 = Theme.Text,
+            TextSize = 12,
+            TextXAlignment = Enum.TextXAlignment.Left
+        })
+        
+        local arrow = CreateInstance("TextLabel", {
+            Name = "Arrow",
+            Parent = dropdownBox,
+            BackgroundTransparency = 1,
+            Position = UDim2.new(1, -20, 0, 0),
+            Size = UDim2.new(0, 20, 1, 0),
+            Font = Enum.Font.GothamBold,
+            Text = "▼",
+            TextColor3 = Theme.TextDark,
+            TextSize = 10
+        })
+        
+        local optionsFrame = CreateInstance("Frame", {
+            Name = "Options",
+            Parent = dropdownFrame,
+            BackgroundColor3 = Theme.Section,
+            BorderSizePixel = 0,
+            Position = UDim2.new(0, 0, 0, 48),
+            Size = UDim2.new(1, 0, 0, 0),
+            Visible = false,
+            ZIndex = 10
+        })
+        
+        CreateInstance("UICorner", {
+            Parent = optionsFrame,
+            CornerRadius = UDim.new(0, 4)
+        })
+        
+        local optionsList = CreateInstance("UIListLayout", {
+            Parent = optionsFrame,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 2)
+        })
+        
+        CreateInstance("UIPadding", {
+            Parent = optionsFrame,
+            PaddingTop = UDim.new(0, 5),
+            PaddingBottom = UDim.new(0, 5)
+        })
+        
+        local isOpen = false
+        local currentValue = default
+        
+        for _, option in ipairs(options) do
+            local optionButton = CreateInstance("TextButton", {
+                Name = option,
+                Parent = optionsFrame,
+                BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+                BackgroundTransparency = 1,
+                BorderSizePixel = 0,
+                Size = UDim2.new(1, 0, 0, 25),
+                Font = Enum.Font.Gotham,
+                Text = option,
+                TextColor3 = Theme.Text,
+                TextSize = 12
+            })
+            
+            optionButton.MouseEnter:Connect(function()
+                optionButton.BackgroundTransparency = 0
+            end)
+            
+            optionButton.MouseLeave:Connect(function()
+                optionButton.BackgroundTransparency = 1
+            end)
+            
+            optionButton.MouseButton1Click:Connect(function()
+                currentValue = option
+                selected.Text = option
+                optionsFrame.Visible = false
+                isOpen = false
+                arrow.Text = "▼"
+                callback(option)
+            end)
+        end
+        
+        optionsFrame.Size = UDim2.new(1, 0, 0, (#options * 27) + 10)
+        
+        local button = CreateInstance("TextButton", {
+            Name = "Button",
+            Parent = dropdownBox,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0),
+            Text = ""
+        })
+        
+        button.MouseButton1Click:Connect(function()
+            isOpen = not isOpen
+            optionsFrame.Visible = isOpen
+            arrow.Text = isOpen and "▲" or "▼"
+            
+            if isOpen then
+                dropdownFrame.Size = UDim2.new(1, 0, 0, 48 + optionsFrame.AbsoluteSize.Y)
+            else
+                dropdownFrame.Size = UDim2.new(1, 0, 0, 40)
+            end
+        end)
+        
+        return {
+            Set = function(value)
+                currentValue = value
+                selected.Text = value
+                callback(value)
+            end,
+            Get = function()
+                return currentValue
+            end
+        }
+    end
+    
+    function methods:AddButton(config)
+        config = config or {}
+        local name = config.Name or "Button"
+        local callback = config.Callback or function() end
+        
+        local buttonFrame = CreateInstance("TextButton", {
+            Name = "Button",
+            Parent = self.Content,
+            BackgroundColor3 = Theme.Accent,
+            BorderSizePixel = 0,
+            Size = UDim2.new(1, 0, 0, 30),
+            Font = Enum.Font.GothamBold,
+            Text = name,
+            TextColor3 = Theme.Text,
+            TextSize = 13
+        })
+        
+        CreateInstance("UICorner", {
+            Parent = buttonFrame,
+            CornerRadius = UDim.new(0, 4)
+        })
+        
+        buttonFrame.MouseButton1Click:Connect(function()
+            callback()
+            
+            -- Visual feedback
+            Tween(buttonFrame, {BackgroundColor3 = Color3.fromRGB(200, 60, 60)}, 0.1)
+            wait(0.1)
+            Tween(buttonFrame, {BackgroundColor3 = Theme.Accent}, 0.1)
+        end)
+        
+        return buttonFrame
+    end
+    
+    return methods
 end
 
-return VoidWare
+return Library
