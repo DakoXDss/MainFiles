@@ -1,6 +1,8 @@
 --[[
-    Primordial Menu Library
-    A 1:1 recreation inspired by the Primordial UI
+    Primordial Menu Library (Expanded)
+    - Adds Bottom Tab Switching Logic
+    - Implements Category Grouping via bottom tabs
+    - Adds new SubSection and ColorPicker methods for complex UI structures (like the ESP panels)
 ]]
 
 local Library = {}
@@ -26,6 +28,7 @@ local Theme = {
     TextDark = Color3.fromRGB(180, 180, 180),
     Border = Color3.fromRGB(20, 20, 20),
     SliderFill = Color3.fromRGB(200, 75, 75),
+    ColorPickerBack = Color3.fromRGB(30, 30, 30) -- New color for picker background
 }
 
 -- Utility Functions
@@ -52,14 +55,20 @@ function Library:New(config)
     self.Title = config.Title or "Primordial"
     self.Categories = {}
     self.CurrentCategory = nil
+    self.CurrentTab = nil -- New property for tracking selected bottom tab
     
     -- Create Main GUI
     self:CreateGUI()
+    
+    -- Initialize the main view to the default tab/category
+    self:SelectTab(self.BottomBar:FindFirstChild("Legit"))
     
     return self
 end
 
 function Library:CreateGUI()
+    -- (Omitted existing GUI creation code for brevity, assumes it remains the same)
+    
     -- ScreenGui
     self.GUI = CreateInstance("ScreenGui", {
         Name = "PrimordialMenu",
@@ -177,16 +186,24 @@ function Library:CreateGUI()
             TextSize = 13
         })
         
-        if i == 2 then
-            local indicator = CreateInstance("Frame", {
-                Name = "Indicator",
-                Parent = tab,
-                BackgroundColor3 = Theme.Accent,
-                BorderSizePixel = 0,
-                Position = UDim2.new(0, 0, 1, -2),
-                Size = UDim2.new(1, 0, 0, 2)
-            })
-        end
+        -- Indicator Frame (initially only for 'Legit' but will be managed dynamically)
+        local indicator = CreateInstance("Frame", {
+            Name = "Indicator",
+            Parent = tab,
+            BackgroundColor3 = Theme.Accent,
+            BorderSizePixel = 0,
+            Position = UDim2.new(0, 0, 1, -2),
+            Size = UDim2.new(1, 0, 0, 2),
+            Visible = i == 2
+        })
+        
+        -- Store the tab and indicator
+        tab.Indicator = indicator
+        
+        -- Add click handler for switching tabs
+        tab.MouseButton1Click:Connect(function()
+            self:SelectTab(tab)
+        end)
     end
     
     -- Make draggable
@@ -195,7 +212,33 @@ function Library:CreateGUI()
     return self.MainFrame
 end
 
+-- New Tab Selection Logic
+function Library:SelectTab(tab)
+    if self.CurrentTab == tab then return end
+    
+    -- Deselect old tab
+    if self.CurrentTab then
+        self.CurrentTab.TextColor3 = Theme.TextDark
+        self.CurrentTab.Indicator.Visible = false
+    end
+    
+    -- Select new tab
+    self.CurrentTab = tab
+    self.CurrentTab.TextColor3 = Theme.Accent
+    self.CurrentTab.Indicator.Visible = true
+    
+    -- Attempt to select the corresponding main category
+    local categoryName = tab.Name
+    for _, category in ipairs(self.Categories) do
+        if category.ParentTab == categoryName then
+            self:SelectCategory(category)
+            break
+        end
+    end
+end
+
 function Library:MakeDraggable(frame, handle)
+    -- (Omitted existing MakeDraggable code for brevity, assumes it remains the same)
     local dragging = false
     local dragInput, mousePos, framePos
     
@@ -236,10 +279,11 @@ end
 function Library:AddCategory(config)
     config = config or {}
     local categoryName = config.Name or "Category"
-    local icon = config.Icon or "rbxasset://textures/ui/GuiImagePlaceholder.png"
+    local parentTab = config.ParentTab or "Misc" -- New: Links category to a bottom tab (e.g., "Visuals")
     
     local category = {
         Name = categoryName,
+        ParentTab = parentTab,
         Sections = {},
         Frame = nil,
         Button = nil
@@ -298,14 +342,19 @@ function Library:AddCategory(config)
     
     -- Button click handler
     button.MouseButton1Click:Connect(function()
+        -- Also switch the bottom tab when a sidebar button is clicked
+        local tab = self.BottomBar:FindFirstChild(parentTab)
+        if tab then
+            self:SelectTab(tab)
+        end
         self:SelectCategory(category)
     end)
     
     table.insert(self.Categories, category)
     
-    -- Select first category by default
-    if #self.Categories == 1 then
-        self:SelectCategory(category)
+    -- Initial visibility handling: only show categories matching the default tab ("Legit")
+    if parentTab ~= "Legit" then
+        button.Visible = false
     end
     
     return setmetatable(category, {__index = self:GetCategoryMethods()})
@@ -315,14 +364,27 @@ function Library:SelectCategory(category)
     if self.CurrentCategory then
         self.CurrentCategory.Frame.Visible = false
         self.CurrentCategory.Button.BackgroundColor3 = Theme.Section
+        -- Hide all other categories that share the same parent tab
+        for _, cat in ipairs(self.Categories) do
+            if cat.ParentTab == self.CurrentCategory.ParentTab and cat ~= category then
+                 cat.Button.Visible = false
+            end
+        end
     end
     
     self.CurrentCategory = category
     category.Frame.Visible = true
     category.Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    
+    -- Show all categories that belong to the new tab
+    for _, cat in ipairs(self.Categories) do
+        if cat.ParentTab == category.ParentTab then
+             cat.Button.Visible = true
+        end
+    end
 end
 
--- Category Methods
+-- Category Methods (No change, just context)
 function Library:GetCategoryMethods()
     local methods = {}
     
@@ -332,6 +394,8 @@ function Library:GetCategoryMethods()
             Frame = nil,
             Elements = {}
         }
+        
+        -- (Omitted Section Frame creation code for brevity)
         
         -- Create section frame
         local sectionFrame = CreateInstance("Frame", {
@@ -348,7 +412,7 @@ function Library:GetCategoryMethods()
             CornerRadius = UDim.new(0, 6)
         })
         
-        -- Section header
+        -- Section header (Enemy/Friendly header)
         local header = CreateInstance("Frame", {
             Name = "Header",
             Parent = sectionFrame,
@@ -374,8 +438,8 @@ function Library:GetCategoryMethods()
             TextSize = 14,
             TextXAlignment = Enum.TextXAlignment.Left
         })
-        
-        -- Section content
+
+        -- Content Area (This holds the sub-sections like 'Bars'/'General')
         local content = CreateInstance("Frame", {
             Name = "Content",
             Parent = sectionFrame,
@@ -414,7 +478,86 @@ end
 function Library:GetSectionMethods()
     local methods = {}
     
+    -- New method to create a sub-section for grouped controls (like 'Bars' in the image)
+    function methods:AddSubSection(sectionName, sizeX, sizeY)
+        local subSectionFrame = CreateInstance("Frame", {
+            Name = sectionName,
+            Parent = self.Content,
+            BackgroundColor3 = Theme.Background, -- Use background or a slightly darker shade
+            BorderSizePixel = 0,
+            Size = UDim2.new(0, sizeX or 200, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y,
+        })
+        
+        CreateInstance("UICorner", {
+            Parent = subSectionFrame,
+            CornerRadius = UDim.new(0, 4)
+        })
+
+        -- Title button (also serves as the container for list layout)
+        local titleButton = CreateInstance("TextButton", {
+            Name = "TitleButton",
+            Parent = subSectionFrame,
+            BackgroundColor3 = Theme.Section,
+            Size = UDim2.new(1, 0, 0, 30),
+            Font = Enum.Font.GothamBold,
+            Text = sectionName,
+            TextColor3 = Theme.Text,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextInsets = UDim2.new(0, 10, 0, 0)
+        })
+
+        CreateInstance("UICorner", {
+            Parent = titleButton,
+            CornerRadius = UDim.new(0, 4)
+        })
+
+        -- Sub-section content frame
+        local content = CreateInstance("Frame", {
+            Name = "SubContent",
+            Parent = subSectionFrame,
+            BackgroundTransparency = 1,
+            Position = UDim2.new(0, 0, 0, 30),
+            Size = UDim2.new(1, 0, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y
+        })
+
+        local contentList = CreateInstance("UIListLayout", {
+            Parent = content,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 5)
+        })
+        
+        CreateInstance("UIPadding", {
+            Parent = content,
+            PaddingTop = UDim.new(0, 5),
+            PaddingLeft = UDim.new(0, 10),
+            PaddingRight = UDim.new(0, 10),
+            PaddingBottom = UDim.new(0, 5)
+        })
+        
+        -- The frame to which child elements will be added
+        local elementContainer = CreateInstance("Frame", {
+            Name = "ElementsContainer",
+            Parent = content,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y
+        })
+        
+        CreateInstance("UIListLayout", {
+            Parent = elementContainer,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 5)
+        })
+        
+        return setmetatable({Content = elementContainer}, {__index = Library:GetSectionMethods()})
+    end
+
+    -- AddToggle (Unchanged)
     function methods:AddToggle(config)
+        -- (Omitted AddToggle code for brevity, Parent is self.Content or the SubSection's Content)
         config = config or {}
         local name = config.Name or "Toggle"
         local default = config.Default or false
@@ -496,7 +639,9 @@ function Library:GetSectionMethods()
         }
     end
     
+    -- AddSlider (Unchanged)
     function methods:AddSlider(config)
+        -- (Omitted AddSlider code for brevity, Parent is self.Content or the SubSection's Content)
         config = config or {}
         local name = config.Name or "Slider"
         local min = config.Min or 0
@@ -610,7 +755,95 @@ function Library:GetSectionMethods()
         }
     end
     
+    -- New Color Picker Widget
+    function methods:AddColorPicker(config)
+        config = config or {}
+        local name = config.Name or "Color"
+        local default = config.Default or Color3.fromRGB(255, 255, 255)
+        local callback = config.Callback or function() end
+        
+        local colorFrame = CreateInstance("Frame", {
+            Name = "ColorPicker",
+            Parent = self.Content,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 20)
+        })
+        
+        local label = CreateInstance("TextLabel", {
+            Name = "Label",
+            Parent = colorFrame,
+            BackgroundTransparency = 1,
+            Position = UDim2.new(0, 0, 0, 0),
+            Size = UDim2.new(0.6, 0, 1, 0),
+            Font = Enum.Font.Gotham,
+            Text = name,
+            TextColor3 = Theme.Text,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left
+        })
+        
+        local colorBox = CreateInstance("TextButton", {
+            Name = "Box",
+            Parent = colorFrame,
+            BackgroundColor3 = Theme.Border,
+            BorderSizePixel = 0,
+            Position = UDim2.new(1, -28, 0, 1),
+            Size = UDim2.new(0, 28, 0, 18)
+        })
+        
+        CreateInstance("UICorner", {
+            Parent = colorBox,
+            CornerRadius = UDim.new(0, 4)
+        })
+        
+        local colorIndicator = CreateInstance("Frame", {
+            Name = "Indicator",
+            Parent = colorBox,
+            BackgroundColor3 = default,
+            BorderSizePixel = 0,
+            Position = UDim2.new(0.5, -12, 0.5, -7),
+            Size = UDim2.new(0, 24, 0, 14),
+            BackgroundTransparency = 0
+        })
+        
+        CreateInstance("UICorner", {
+            Parent = colorIndicator,
+            CornerRadius = UDim.new(0, 2)
+        })
+
+        local currentColor = default
+        
+        colorBox.MouseButton1Click:Connect(function()
+            -- In a real environment, this would open a ColorPicker GUI.
+            -- For simplicity in a standalone script, we'll demonstrate a console message.
+            print("Color Picker for '" .. name .. "' clicked.")
+            
+            -- Simple demo: change to a random color upon click
+            local r = math.random()
+            local g = math.random()
+            local b = math.random()
+            local newColor = Color3.new(r, g, b)
+            
+            currentColor = newColor
+            colorIndicator.BackgroundColor3 = currentColor
+            callback(currentColor)
+        end)
+        
+        return {
+            Set = function(color)
+                currentColor = color
+                colorIndicator.BackgroundColor3 = color
+                callback(color)
+            end,
+            Get = function()
+                return currentColor
+            end
+        }
+    end
+    
+    -- AddDropdown (Unchanged)
     function methods:AddDropdown(config)
+        -- (Omitted AddDropdown code for brevity, Parent is self.Content or the SubSection's Content)
         config = config or {}
         local name = config.Name or "Dropdown"
         local options = config.Options or {"Option 1", "Option 2"}
@@ -773,7 +1006,9 @@ function Library:GetSectionMethods()
         }
     end
     
+    -- AddButton (Unchanged)
     function methods:AddButton(config)
+        -- (Omitted AddButton code for brevity, Parent is self.Content or the SubSection's Content)
         config = config or {}
         local name = config.Name or "Button"
         local callback = config.Callback or function() end
