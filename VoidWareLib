@@ -95,7 +95,7 @@ function Library:CreateGUI()
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 20, 0.5, -15),
         Size = UDim2.new(0, 30, 0, 30),
-        Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+        Image = "https://create.roblox.com/store/asset/116734443491933/Clan-logo.png"
     })
     
     local title = CreateInstance("TextLabel", {
