@@ -7825,6 +7825,16 @@ do
         end
     end
     
+    -- setTheme fix (prevents nil color crashes)
+    ui.setTheme = function(newTheme) 
+        if (typeof(newTheme) ~= 'table') then
+            return error('expected type table for theme', 2)
+        end
+        for key, value in pairs(newTheme) do
+            theme[key] = value
+        end
+    end
+
     -- hotkey handler
     do 
         local hotkeys = ui.hotkeys
