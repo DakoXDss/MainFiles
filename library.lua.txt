@@ -736,7 +736,10 @@ do
                 if (tooltip.handle == self) then 
                     tooltip.showing = false
                     tooltip.handle = nil
-                    tooltip.update:Disconnect()
+                    if (tooltip.update) then
+                        tooltip.update:Disconnect()
+                        tooltip.update = nil
+                    end
                     
                     tooltip.instances.main.Visible = false
                 end
@@ -4148,7 +4151,7 @@ do
                     local layout = Instance.new('UIListLayout') do 
                         layout.FillDirection = 'Vertical'
                         layout.HorizontalAlignment = 'Center'
-                        layout.Padding = UDim.new(0, 4)
+                        layout.Padding = UDim.new(0, 5)
                         layout.VerticalAlignment = 'Top'
                         
                         layout.Parent = menu
@@ -4504,7 +4507,7 @@ do
                             toggle.Parent = backToggle
                             
                             local round = Instance.new('UICorner') do 
-                                round.CornerRadius = UDim.new(0, rounding and 2 or 0)
+                                round.CornerRadius = UDim.new(0, rounding and 4 or 0)
                                 round.Name = '#round'
                                 
                                 round.Parent = toggle
@@ -4721,7 +4724,7 @@ do
             toggle.getValue = toggle.getState
             
             elemClasses.section.addToggle = function(self, settings, callback) 
-                if (not typeof(settings) == 'table') then
+                if (typeof(settings) ~= 'table') then
                     return error('expected type table for settings', 2) 
                 end
                 
@@ -5107,7 +5110,7 @@ do
         
         -- button finalization
         elemClasses.section.addButton = function(self, settings, callback) 
-            if (not typeof(settings) == 'table') then
+            if (typeof(settings) ~= 'table') then
                 return error('expected type table for settings', 2) 
             end
             
@@ -5854,16 +5857,17 @@ do
                     
                     local sliderContainer = Instance.new('Frame') do 
                         sliderContainer.BackgroundColor3 = theme.Button1
-                        sliderContainer.Position = UDim2.fromOffset(3, 2)
-                        sliderContainer.Size = UDim2.new(1, -6, 0, 16)
+                        sliderContainer.Position = UDim2.fromOffset(3, 1)
+                        sliderContainer.Size = UDim2.new(1, -6, 0, 18)
                         sliderContainer.Visible = true
                         sliderContainer.ZIndex = 35
+                        sliderContainer.ClipsDescendants = true
                         sliderContainer.Name = '#slider-container'
                         
                         sliderContainer.Parent = controlFrame
                         
                         local round = Instance.new('UICorner') do 
-                            round.CornerRadius = UDim.new(0, rounding and 2 or 0)
+                            round.CornerRadius = UDim.new(0, rounding and 8 or 0)
                             round.Name = '#round'
                             
                             round.Parent = sliderContainer
@@ -5891,7 +5895,7 @@ do
                             sliderFill.Parent = sliderContainer
                             
                             local round = Instance.new('UICorner') do 
-                                round.CornerRadius = UDim.new(0, rounding and 2 or 0)
+                                round.CornerRadius = UDim.new(0, rounding and 8 or 0)
                                 round.Name = '#round'
                                 
                                 round.Parent = sliderFill
@@ -5935,7 +5939,7 @@ do
                             inputBox.Parent = sliderContainer
                             
                             local round = Instance.new('UICorner') do 
-                                round.CornerRadius = UDim.new(0, rounding and 2 or 0)
+                                round.CornerRadius = UDim.new(0, rounding and 8 or 0)
                                 round.Name = '#round'
                                 
                                 round.Parent = inputBox
@@ -6019,14 +6023,16 @@ do
                     MouseEnter = function(inst, win) 
                         win:showTooltip()
                         
-                        tween(inst, {BackgroundColor3 = theme.Button2}, 0.2, 1)
-                        tween(inst['#stroke'], {Color = theme.StrokeHover}, 0.2, 1)
+                        tween(inst, {BackgroundColor3 = theme.Button2}, 0.25, 1)
+                        tween(inst['#stroke'], {Color = theme.StrokeHover}, 0.25, 1)
+                        tween(inst['#slider-fill'], {BackgroundTransparency = 0.4}, 0.25, 1)
                     end,
                     MouseLeave = function(inst, win) 
                         win:hideTooltip()
                         
-                        tween(inst, {BackgroundColor3 = theme.Button1}, 0.2, 1)
-                        tween(inst['#stroke'], {Color = theme.Stroke}, 0.2, 1)
+                        tween(inst, {BackgroundColor3 = theme.Button1}, 0.25, 1)
+                        tween(inst['#stroke'], {Color = theme.Stroke}, 0.25, 1)
+                        tween(inst['#slider-fill'], {BackgroundTransparency = 0.6}, 0.25, 1)
                     end
                 }
             }
@@ -6082,7 +6088,7 @@ do
                             inputbox.Visible = false
                         else
                             inputbox.Text = 'not a valid number'
-                            wait(1)
+                            task.wait(1)
                             inputbox:CaptureFocus()
                         end
                     end)
@@ -6165,7 +6171,7 @@ do
             end
             
             elemClasses.section.addSlider = function(self, settings, callback) 
-                if (not typeof(settings) == 'table') then
+                if (typeof(settings) ~= 'table') then
                     return error('expected type table for settings', 2) 
                 end
                 
@@ -6580,7 +6586,7 @@ do
             end
 
             elemClasses.section.addColorPicker = function(self, settings, callback) 
-                if (not typeof(settings) == 'table') then
+                if (typeof(settings) ~= 'table') then
                     return error('expected type table for settings', 2) 
                 end
                 
@@ -6779,7 +6785,7 @@ do
             end
             textbox.setText = function(self, newText) 
                 self.instances.textBox.Text = tostring(newText)
-                obj:fireEvent('onTextChange', newText)
+                self:fireEvent('onTextChange', newText)
             end
             
             
@@ -7017,7 +7023,7 @@ do
             
             
             elemClasses.section.addTextbox = function(self, settings, callback) 
-                if (not typeof(settings) == 'table') then
+                if (typeof(settings) ~= 'table') then
                     return error('expected type table for settings', 2) 
                 end
                 
@@ -7304,7 +7310,7 @@ do
                         end
                         
                         transparency = nil
-                        scrollBarImageTransparency = nil
+                        -- scrollBarImageTransparency removed (was referencing undefined variable)
                         animCon = renderService.RenderStepped:Connect(function(dt) 
                             dt *= 8
                             for i= 1, #backgroundTransparency do 
@@ -7588,7 +7594,7 @@ do
             hotkey.getHotkey = function(self) return self.hotkey end 
             
             elemClasses.section.addHotkey = function(self, settings) 
-                if (not typeof(settings) == 'table') then
+                if (typeof(settings) ~= 'table') then
                     return error('expected type table for settings', 2) 
                 end
                 
