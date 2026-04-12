@@ -304,7 +304,7 @@ function Library:CreateWindow(cfg)
         local T = {_btn=btn, _page=page, _subs={}, _subBtns={}, _w=self, _activeSub=nil}
         table.insert(self._tabs, T)
 
-        btn.MouseButton1Click:Connect(function()
+        T._tabClick = function()
             for _, t in ipairs(self._tabs) do
                 t._page.Visible = false
                 tw(t._btn, {BackgroundTransparency = 1}, 0.15)
@@ -313,13 +313,16 @@ function Library:CreateWindow(cfg)
             T._page.Visible = true
             tw(btn, {BackgroundTransparency = 0.5}, 0.15)
             for _, sb in ipairs(T._subBtns) do sb.Visible = true end
-            if #T._subs > 0 then T._subs[1]._btn.MouseButton1Click:Fire() end
-        end)
+            if #T._subs > 0 and T._subs[1]._click then T._subs[1]._click() end
+        end
 
-        if #self._tabs == 1 then task.defer(function() btn.MouseButton1Click:Fire() end) end
+        if #self._tabs == 1 then task.defer(function() T._tabClick() end) end
 
         -- ─── SubTab ───
-        function T:AddSubTab(stName)
+        btn.MouseButton1Click:Connect(function() T._tabClick() end)
+
+        function T:AddSubTab(stCfg)
+            local stName = type(stCfg) == "table" and (stCfg.Name or "SubTab") or (stCfg or "SubTab")
             local stBtn = create("TextButton", {
                 Parent=SubFrame, BackgroundColor3=C.FrameAct, BackgroundTransparency=1,
                 Size=UDim2.new(0,80,1,0), Font=Enum.Font.GothamMedium, Text=stName,
@@ -345,14 +348,15 @@ function Library:CreateWindow(cfg)
             local ST = {_btn=stBtn, _page=stPage, _left=LCol, _right=RCol, _secOrd=0}
             table.insert(T._subs, ST)
 
-            stBtn.MouseButton1Click:Connect(function()
+            ST._click = function()
                 for _, s in ipairs(T._subs) do
                     s._page.Visible = false
                     tw(s._btn, {BackgroundTransparency=1, TextColor3=C.TextDis}, 0.15)
                 end
                 ST._page.Visible = true
                 tw(stBtn, {BackgroundTransparency=0.2, TextColor3=C.Text}, 0.15)
-            end)
+            end
+            stBtn.MouseButton1Click:Connect(function() ST._click() end)
 
             -- ─── Section / GroupBox ───
             function ST:AddSection(sc)
@@ -417,11 +421,19 @@ function Library:CreateWindow(cfg)
                     if tc.Flag then
                         Library._flags[tc.Flag] = {
                             get = function() return state end,
-                            set = function(v) if v ~= state then sw.MouseButton1Click:Fire() end end,
+                            set = function(v)
+                                if v ~= state then
+                                    state = v
+                                    tw(sw, {BackgroundColor3 = state and C.Accent or C.BtnAct}, 0.2)
+                                    tw(th, {Position = state and UDim2.new(0,17,0.5,-5) or UDim2.new(0,3,0.5,-5), BackgroundColor3 = state and C.Text or C.TextDis}, 0.2)
+                                    tw(lbl, {TextColor3 = state and C.Text or C.TextDis}, 0.2)
+                                    cb(state)
+                                end
+                            end,
                             type = "toggle"
                         }
                     end
-                    return {Set=function(_,v) if v~=state then sw.MouseButton1Click:Fire() end end, Get=function() return state end}
+                    return {Set=function(_,v) if v~=state then Library._flags[tc.Flag] and Library._flags[tc.Flag].set(v) end end, Get=function() return state end}
                 end
 
                 -- ══════ SLIDER ══════
