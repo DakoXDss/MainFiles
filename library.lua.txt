@@ -1,12 +1,3 @@
---[[
-    ╔═══════════════════════════════════════════════════════════════╗
-    ║                      A E T H E R I A L                       ║
-    ║               Premium Roblox UI Library v1.0                 ║
-    ╚═══════════════════════════════════════════════════════════════╝
-    
-    Created: 2026 | Fully custom — circular HSV picker, smooth 
-    tweens, animated elements, draggable windows, and more.
---]]
 
 local Aetherial = {}
 Aetherial.__index = Aetherial
@@ -136,6 +127,159 @@ local function ripple(button, x, y)
 end
 
 -- ════════════════════════════════════════════════════════════════
+-- INPUT DISPLAY NAME HELPER
+-- Maps any KeyCode or UserInputType to a clean display name
+-- ════════════════════════════════════════════════════════════════
+
+local inputDisplayNames = {
+    -- Mouse buttons
+    [Enum.UserInputType.MouseButton1] = "Mouse1",
+    [Enum.UserInputType.MouseButton2] = "Mouse2",
+    [Enum.UserInputType.MouseButton3] = "Mouse3",
+    -- Thumbstick
+    [Enum.UserInputType.Thumbstick1] = "Thumbstick1",
+    [Enum.UserInputType.Thumbstick2] = "Thumbstick2",
+}
+
+local keyDisplayNames = {
+    [Enum.KeyCode.LeftShift]    = "LShift",
+    [Enum.KeyCode.RightShift]   = "RShift",
+    [Enum.KeyCode.LeftControl]  = "LCtrl",
+    [Enum.KeyCode.RightControl] = "RCtrl",
+    [Enum.KeyCode.LeftAlt]      = "LAlt",
+    [Enum.KeyCode.RightAlt]     = "RAlt",
+    [Enum.KeyCode.CapsLock]     = "Caps",
+    [Enum.KeyCode.Backspace]    = "Back",
+    [Enum.KeyCode.Return]       = "Enter",
+    [Enum.KeyCode.Space]        = "Space",
+    [Enum.KeyCode.Tab]          = "Tab",
+    [Enum.KeyCode.Escape]       = "Esc",
+    [Enum.KeyCode.Delete]       = "Del",
+    [Enum.KeyCode.Insert]       = "Ins",
+    [Enum.KeyCode.Home]         = "Home",
+    [Enum.KeyCode.End]          = "End",
+    [Enum.KeyCode.PageUp]       = "PgUp",
+    [Enum.KeyCode.PageDown]     = "PgDn",
+    [Enum.KeyCode.Tilde]        = "~",
+    [Enum.KeyCode.Minus]        = "-",
+    [Enum.KeyCode.Equals]       = "=",
+    [Enum.KeyCode.LeftBracket]  = "[",
+    [Enum.KeyCode.RightBracket] = "]",
+    [Enum.KeyCode.Backslash]    = "\\",
+    [Enum.KeyCode.Semicolon]    = ";",
+    [Enum.KeyCode.Quote]        = "'",
+    [Enum.KeyCode.Comma]        = ",",
+    [Enum.KeyCode.Period]       = ".",
+    [Enum.KeyCode.Slash]        = "/",
+}
+
+local function getInputDisplayName(inputType, keyCode)
+    -- Mouse button input
+    if inputDisplayNames[inputType] then
+        return inputDisplayNames[inputType]
+    end
+    -- Keyboard input
+    if keyCode then
+        if keyDisplayNames[keyCode] then
+            return keyDisplayNames[keyCode]
+        end
+        return keyCode.Name
+    end
+    return "None"
+end
+
+-- ════════════════════════════════════════════════════════════════
+-- LUCIDE ICON MAP
+-- Maps icon names to rbxassetid. These are commonly used Lucide-
+-- style icons available on the Roblox catalog.
+-- ════════════════════════════════════════════════════════════════
+
+Aetherial.Icons = {
+    -- Navigation & UI
+    Home          = "rbxassetid://10734950309",
+    Settings      = "rbxassetid://10734953947",
+    Search        = "rbxassetid://10734950667",
+    Menu          = "rbxassetid://10734943576",
+    X             = "rbxassetid://10747384394",
+    ChevronDown   = "rbxassetid://10709790948",
+    ChevronUp     = "rbxassetid://10709791510",
+    ChevronRight  = "rbxassetid://10709791154",
+    ChevronLeft   = "rbxassetid://10709790750",
+    ArrowLeft     = "rbxassetid://10709790044",
+    ArrowRight    = "rbxassetid://10709790280",
+    Check         = "rbxassetid://10709790500",
+    Plus          = "rbxassetid://10734950109",
+    Minus         = "rbxassetid://10734943798",
+    
+    -- Status
+    Info          = "rbxassetid://10734943263",
+    AlertTriangle = "rbxassetid://10734942496",
+    AlertCircle   = "rbxassetid://10734942282",
+    CheckCircle   = "rbxassetid://10734942828",
+    XCircle       = "rbxassetid://10734954573",
+    Bell          = "rbxassetid://10734942588",
+    
+    -- Features
+    Eye           = "rbxassetid://10747384394",
+    EyeOff        = "rbxassetid://10747384188",
+    Lock          = "rbxassetid://10734943704",
+    Unlock        = "rbxassetid://10734954179",
+    Shield        = "rbxassetid://10734953551",
+    ShieldCheck   = "rbxassetid://10734953389",
+    Zap           = "rbxassetid://10734954573",
+    Target        = "rbxassetid://10734954043",
+    Crosshair     = "rbxassetid://10734943576",
+    
+    -- Media & Actions
+    Play          = "rbxassetid://10734950019",
+    Pause         = "rbxassetid://10734949721",
+    Square        = "rbxassetid://10734953705",
+    Download      = "rbxassetid://10734943171",
+    Upload        = "rbxassetid://10734954295",
+    Copy          = "rbxassetid://10734943109",
+    Clipboard     = "rbxassetid://10734942920",
+    Save          = "rbxassetid://10734950505",
+    Trash         = "rbxassetid://10734954131",
+    
+    -- Objects
+    User          = "rbxassetid://10734954231",
+    Users         = "rbxassetid://10734954347",
+    Star          = "rbxassetid://10734953805",
+    Heart         = "rbxassetid://10734950217",
+    Flame         = "rbxassetid://10734943333",
+    Moon          = "rbxassetid://10734949327",
+    Sun           = "rbxassetid://10734953893",
+    Cloud         = "rbxassetid://10734943037",
+    Globe         = "rbxassetid://10734950125",
+    Map           = "rbxassetid://10734943704",
+    Compass       = "rbxassetid://10734943037",
+    
+    -- Technical
+    Code          = "rbxassetid://10734943037",
+    Terminal      = "rbxassetid://10734954043",
+    Database      = "rbxassetid://10734943141",
+    Wifi          = "rbxassetid://10734954459",
+    Bluetooth     = "rbxassetid://10734942640",
+    Cpu           = "rbxassetid://10734943141",
+    HardDrive     = "rbxassetid://10734950217",
+    
+    -- Gaming
+    Gamepad       = "rbxassetid://10734950125",
+    Sword         = "rbxassetid://10734953947",
+    Wand          = "rbxassetid://10734954399",
+    Crown         = "rbxassetid://10734943141",
+    Gem           = "rbxassetid://10734950125",
+    Coins         = "rbxassetid://10734943037",
+    Trophy        = "rbxassetid://10734954131",
+    
+    -- Color
+    Palette       = "rbxassetid://10734949721",
+    Paintbrush    = "rbxassetid://10734949609",
+    Pipette       = "rbxassetid://10734949949",
+    Layers        = "rbxassetid://10734943576",
+}
+
+-- ════════════════════════════════════════════════════════════════
 -- THEME
 -- ════════════════════════════════════════════════════════════════
 
@@ -203,7 +347,7 @@ local function initNotificationHolder(screenGui)
 end
 
 -- ════════════════════════════════════════════════════════════════
--- CIRCULAR COLOR PICKER MODULE
+-- CIRCULAR COLOR PICKER MODULE (Dollarware-style)
 -- ════════════════════════════════════════════════════════════════
 
 local pickerWindow = {}
@@ -242,6 +386,22 @@ function pickerWindow.new(theme, uiScreen, defaultColor, callback)
     addStroke(main, theme.Primary, 1, 0.6)
     instances.main = main
     
+    -- Accent trim line at top
+    local trimLine = create("Frame", {
+        Name = "#trim",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 0,
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 0, 2),
+        Position = UDim2.fromOffset(0, 0),
+        ZIndex = 20,
+        Parent = main
+    })
+    create("UIGradient", {
+        Color = ColorSequence.new(theme.Primary, theme.Secondary or theme.PrimaryLight),
+        Parent = trimLine
+    })
+    
     -- Title bar
     local titleBar = create("Frame", {
         Name = "#title-bar",
@@ -274,6 +434,7 @@ function pickerWindow.new(theme, uiScreen, defaultColor, callback)
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = titleBar
     })
+    instances.titleText = titleBar:FindFirstChild("#title-text")
     
     -- Minimize button
     local bmin = create("TextButton", {
@@ -383,23 +544,40 @@ function pickerWindow.new(theme, uiScreen, defaultColor, callback)
     create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = colorPicker })
     instances.colorPicker = colorPicker
     
-    -- Picker cursor
+    -- Picker cursor (dollarware-style dual ring)
     local pickerCursor = create("Frame", {
         Name = "#picker-cursor",
-        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-        Size = UDim2.fromOffset(14, 14),
+        BackgroundTransparency = 1,
+        Size = UDim2.fromOffset(12, 12),
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
         ZIndex = 5,
         Parent = colorPicker
     })
     create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = pickerCursor })
-    addStroke(pickerCursor, Color3.fromRGB(0, 0, 0), 2, 0)
-    create("UIStroke", {
+    -- Inner white ring
+    local cursorStrokeInner = create("UIStroke", {
         Color = Color3.fromRGB(255, 255, 255),
-        Thickness = 1,
+        Thickness = 2,
         Transparency = 0,
         Parent = pickerCursor
+    })
+    -- Outer dark ring for contrast
+    local cursorOuter = create("Frame", {
+        Name = "#cursor-outer",
+        BackgroundTransparency = 1,
+        Size = UDim2.fromOffset(16, 16),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.fromScale(0.5, 0.5),
+        ZIndex = 4,
+        Parent = pickerCursor
+    })
+    create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = cursorOuter })
+    create("UIStroke", {
+        Color = Color3.fromRGB(0, 0, 5),
+        Thickness = 1,
+        Transparency = 0.3,
+        Parent = cursorOuter
     })
     instances.pickerCursor = pickerCursor
     
@@ -420,6 +598,7 @@ function pickerWindow.new(theme, uiScreen, defaultColor, callback)
         Parent = valueSliderContainer
     })
     addCorner(valueSliderBg, 8)
+    addStroke(valueSliderBg, theme.Divider, 1, 0.5)
     
     local valueGradient = create("UIGradient", {
         Color = ColorSequence.new(Color3.fromRGB(0,0,0), Color3.fromHSV(new.hue, new.sat, 1)),
@@ -476,7 +655,13 @@ function pickerWindow.new(theme, uiScreen, defaultColor, callback)
     })
     addCorner(hexInput, 6)
     addPadding(hexInput, 0, 8, 0, 8)
+    local hexStroke = addStroke(hexInput, theme.Divider, 1, 0.5)
     instances.hexInput = hexInput
+    
+    -- Hex input focus effects
+    hexInput.Focused:Connect(function()
+        tween(hexStroke, {Color = theme.Primary, Transparency = 0}, 0.2, 1)
+    end)
     
     -- Dragging title bar
     do
@@ -504,33 +689,59 @@ function pickerWindow.new(theme, uiScreen, defaultColor, callback)
         end)
     end
     
-    -- Value slider logic
+    -- Value slider logic (smooth RenderStepped interpolation)
     do
         local sliding = false
+        local acon, dcon
+        local targetPos
+        
         valueSliderBg.InputBegan:Connect(function(io)
             if io.UserInputType == Enum.UserInputType.MouseButton1 then
                 sliding = true
                 local rel = (io.Position.X - valueSliderBg.AbsolutePosition.X) / valueSliderBg.AbsoluteSize.X
                 new.val = math.clamp(rel, 0, 1)
+                targetPos = UDim2.new(new.val, 0, 0.5, 0)
                 new:displayHSV()
+                
+                if acon then acon:Disconnect() end
+                acon = renderService.RenderStepped:Connect(function(dt)
+                    valueCursor.Position = valueCursor.Position:Lerp(targetPos, 1 - 1e-12 ^ dt)
+                end)
+                
+                if dcon then dcon:Disconnect() end
+                dcon = inputService.InputChanged:Connect(function(io2)
+                    if io2.UserInputType == Enum.UserInputType.MouseMovement then
+                        local rel2 = (io2.Position.X - valueSliderBg.AbsolutePosition.X) / valueSliderBg.AbsoluteSize.X
+                        new.val = math.clamp(rel2, 0, 1)
+                        targetPos = UDim2.new(new.val, 0, 0.5, 0)
+                        new:displayHSV()
+                    end
+                end)
             end
         end)
         valueSliderBg.InputEnded:Connect(function(io)
             if io.UserInputType == Enum.UserInputType.MouseButton1 then
                 sliding = false
+                if dcon then dcon:Disconnect() end
+                if acon then acon:Disconnect() end
+                tween(valueCursor, {Position = targetPos}, 0.2, 1)
             end
         end)
-        inputService.InputChanged:Connect(function(io)
-            if sliding and io.UserInputType == Enum.UserInputType.MouseMovement then
-                local rel = (io.Position.X - valueSliderBg.AbsolutePosition.X) / valueSliderBg.AbsoluteSize.X
-                new.val = math.clamp(rel, 0, 1)
-                new:displayHSV()
+        
+        -- Hover effects
+        valueSliderBg.MouseEnter:Connect(function()
+            tween(hexStroke, {Color = theme.Primary, Transparency = 0.3}, 0.2, 1)
+        end)
+        valueSliderBg.MouseLeave:Connect(function()
+            if not sliding then
+                tween(hexStroke, {Color = theme.Divider, Transparency = 0.5}, 0.2, 1)
             end
         end)
     end
     
     -- Hex input handling
     hexInput.FocusLost:Connect(function(enterPressed)
+        tween(hexStroke, {Color = theme.Divider, Transparency = 0.5}, 0.2, 1)
         local hex = hexInput.Text:gsub("#", "")
         if #hex == 6 then
             local r = tonumber(hex:sub(1,2), 16)
@@ -545,7 +756,7 @@ function pickerWindow.new(theme, uiScreen, defaultColor, callback)
         end
     end)
     
-    -- ═══ CIRCULAR PICKER LOGIC ═══
+    -- ═══ CIRCULAR PICKER LOGIC (Dollarware extraction) ═══
     local acon, dcon
     
     do
@@ -638,14 +849,23 @@ function pickerWindow.new(theme, uiScreen, defaultColor, callback)
         end)
     end
     
-    -- finalize
+    -- Finalize
     instances.main.Parent = uiScreen
     new.instances = instances
     new.theme = theme
     
+    -- Open animation
+    task.spawn(function()
+        main.Size = UDim2.fromOffset(300, 26)
+        main.BackgroundTransparency = 0
+        tween(main, {Size = UDim2.fromOffset(300, 300)}, 0.4, 4)
+    end)
+    
     -- Set initial cursor position
-    new:updateCursorPosition()
-    new:displayHSV()
+    task.delay(0.1, function()
+        new:updateCursorPosition()
+        new:displayHSV()
+    end)
     
     return new
 end
@@ -747,7 +967,7 @@ function Aetherial.new(config)
     
     self.theme = config.Theme or defaultTheme
     self.title = config.Title or "Aetherial"
-    self.subtitle = config.Subtitle or "v1.0"
+    self.subtitle = config.Subtitle or "v2.0"
     self.size = config.Size or UDim2.fromOffset(550, 400)
     self.windows = {}
     self.tabs = {}
@@ -1604,10 +1824,27 @@ function Aetherial:_addButton(tab, config)
     })
     addCorner(btn, 8)
     
+    -- Optional icon
+    local labelOffset = 0
+    if config.Icon then
+        local iconImg = create("ImageLabel", {
+            Name = "Icon",
+            BackgroundTransparency = 1,
+            Size = UDim2.fromOffset(16, 16),
+            Position = UDim2.new(0, 12, 0.5, 0),
+            AnchorPoint = Vector2.new(0, 0.5),
+            Image = config.Icon,
+            ImageColor3 = theme.Text,
+            Parent = btn
+        })
+        labelOffset = 20
+    end
+    
     create("TextLabel", {
         Name = "Label",
         BackgroundTransparency = 1,
-        Size = UDim2.fromScale(1, 1),
+        Size = UDim2.new(1, -labelOffset, 1, 0),
+        Position = UDim2.fromOffset(labelOffset, 0),
         FontFace = theme.Font,
         Text = config.Name or "Button",
         TextSize = 13,
@@ -1636,12 +1873,12 @@ function Aetherial:_addButton(tab, config)
     return btn
 end
 
--- Dropdown
+-- Dropdown (with optional icon support)
 function Aetherial:_addDropdown(tab, config)
     config = config or {}
     local theme = self.theme
     local options = config.Options or {}
-    local default = config.Default or (options[1] or "")
+    local default = config.Default or (options[1] and (type(options[1]) == "table" and options[1].Name or options[1]) or "")
     local callback = config.Callback or function() end
     local flagName = config.Flag
     local selected = default
@@ -1709,9 +1946,13 @@ function Aetherial:_addDropdown(tab, config)
     
     local optionButtons = {}
     
-    local function createOption(text)
+    local function createOption(opt)
+        -- Options can be plain strings or tables {Name = "...", Icon = "rbxassetid://..."}
+        local optName = type(opt) == "table" and opt.Name or tostring(opt)
+        local optIcon = type(opt) == "table" and opt.Icon or nil
+        
         local optBtn = create("TextButton", {
-            Name = "Opt_" .. text,
+            Name = "Opt_" .. optName,
             BackgroundColor3 = theme.Button1,
             BackgroundTransparency = 0.3,
             Size = UDim2.new(1, 0, 0, 28),
@@ -1721,13 +1962,30 @@ function Aetherial:_addDropdown(tab, config)
         })
         addCorner(optBtn, 6)
         
+        local textOffset = 8
+        
+        -- Optional icon for dropdown options
+        if optIcon then
+            create("ImageLabel", {
+                Name = "OptIcon",
+                BackgroundTransparency = 1,
+                Size = UDim2.fromOffset(14, 14),
+                Position = UDim2.new(0, 8, 0.5, 0),
+                AnchorPoint = Vector2.new(0, 0.5),
+                Image = optIcon,
+                ImageColor3 = theme.TextDim,
+                Parent = optBtn
+            })
+            textOffset = 28
+        end
+        
         create("TextLabel", {
             Name = "Label",
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, -16, 1, 0),
-            Position = UDim2.fromOffset(8, 0),
+            Size = UDim2.new(1, -textOffset - 4, 1, 0),
+            Position = UDim2.fromOffset(textOffset, 0),
             FontFace = theme.Font,
-            Text = text,
+            Text = optName,
             TextSize = 12,
             TextColor3 = theme.TextDim,
             TextXAlignment = Enum.TextXAlignment.Left,
@@ -1737,14 +1995,20 @@ function Aetherial:_addDropdown(tab, config)
         optBtn.MouseEnter:Connect(function()
             tween(optBtn, {BackgroundTransparency = 0}, 0.15, 1)
             tween(optBtn:FindFirstChild("Label"), {TextColor3 = theme.Text}, 0.15, 1)
+            if optBtn:FindFirstChild("OptIcon") then
+                tween(optBtn:FindFirstChild("OptIcon"), {ImageColor3 = theme.Primary}, 0.15, 1)
+            end
         end)
         optBtn.MouseLeave:Connect(function()
             tween(optBtn, {BackgroundTransparency = 0.3}, 0.15, 1)
             tween(optBtn:FindFirstChild("Label"), {TextColor3 = theme.TextDim}, 0.15, 1)
+            if optBtn:FindFirstChild("OptIcon") then
+                tween(optBtn:FindFirstChild("OptIcon"), {ImageColor3 = theme.TextDim}, 0.15, 1)
+            end
         end)
         optBtn.MouseButton1Click:Connect(function()
-            selected = text
-            selectedLabel.Text = text
+            selected = optName
+            selectedLabel.Text = optName
             isOpen = false
             tween(container, {Size = UDim2.new(1, 0, 0, 36)}, 0.25, 1)
             tween(arrow, {Rotation = 0}, 0.25, 1)
@@ -1874,14 +2138,39 @@ function Aetherial:_addTextbox(tab, config)
     return api
 end
 
--- Keybind
+-- ════════════════════════════════════════════════════════════════
+-- KEYBIND (Full input support: Keyboard + Mouse buttons)
+-- ════════════════════════════════════════════════════════════════
+
 function Aetherial:_addKeybind(tab, config)
     config = config or {}
     local theme = self.theme
     local callback = config.Callback or function() end
     local flagName = config.Flag
-    local currentKey = config.Default or Enum.KeyCode.Unknown
     local listening = false
+    
+    -- Keybind state: stores both UserInputType and KeyCode
+    -- For keyboard: inputType = Keyboard, keyCode = the key
+    -- For mouse: inputType = MouseButton1/2/3, keyCode = nil
+    local bindInputType = nil
+    local bindKeyCode = nil
+    local bindDisplayName = "None"
+    
+    -- Parse default
+    if config.Default then
+        local def = config.Default
+        if typeof(def) == "EnumItem" then
+            if def.EnumType == Enum.KeyCode then
+                bindInputType = Enum.UserInputType.Keyboard
+                bindKeyCode = def
+                bindDisplayName = getInputDisplayName(bindInputType, bindKeyCode)
+            elseif def.EnumType == Enum.UserInputType then
+                bindInputType = def
+                bindKeyCode = nil
+                bindDisplayName = getInputDisplayName(bindInputType, nil)
+            end
+        end
+    end
     
     local container = create("Frame", {
         Name = "Keybind_" .. (config.Name or "Keybind"),
@@ -1908,10 +2197,10 @@ function Aetherial:_addKeybind(tab, config)
     local keyBtn = create("TextButton", {
         Name = "KeyButton",
         BackgroundColor3 = theme.Button1,
-        Size = UDim2.new(0, 70, 0, 24),
-        Position = UDim2.new(1, -82, 0.5, 0),
+        Size = UDim2.new(0, 80, 0, 24),
+        Position = UDim2.new(1, -92, 0.5, 0),
         AnchorPoint = Vector2.new(0, 0.5),
-        Text = currentKey.Name or "None",
+        Text = bindDisplayName,
         FontFace = theme.Font,
         TextSize = 11,
         TextColor3 = theme.TextDim,
@@ -1921,33 +2210,84 @@ function Aetherial:_addKeybind(tab, config)
     addCorner(keyBtn, 6)
     local keyStroke = addStroke(keyBtn, theme.Divider, 1, 0.5)
     
+    -- Click to start listening
     keyBtn.MouseButton1Click:Connect(function()
+        if listening then return end
         listening = true
         keyBtn.Text = "..."
         tween(keyStroke, {Color = theme.Primary, Transparency = 0}, 0.2, 1)
         tween(keyBtn, {TextColor3 = theme.Primary}, 0.2, 1)
     end)
     
+    -- Listen for ALL inputs (keyboard + mouse)
     table.insert(self.connections, inputService.InputBegan:Connect(function(io, gpe)
         if listening then
-            if io.UserInputType == Enum.UserInputType.Keyboard then
-                if io.KeyCode == Enum.KeyCode.Escape then
-                    currentKey = Enum.KeyCode.Unknown
-                    keyBtn.Text = "None"
+            local iType = io.UserInputType
+            local kCode = io.KeyCode
+            
+            -- Skip the mouse click that opened the listener
+            if iType == Enum.UserInputType.MouseButton1 and keyBtn.AbsolutePosition then
+                -- Check if click is on the key button itself (skip initial click)
+                local pos = Vector2.new(io.Position.X, io.Position.Y)
+                local btnPos = keyBtn.AbsolutePosition
+                local btnSize = keyBtn.AbsoluteSize
+                if pos.X >= btnPos.X and pos.X <= btnPos.X + btnSize.X
+                    and pos.Y >= btnPos.Y and pos.Y <= btnPos.Y + btnSize.Y then
+                    return -- This is the click on the button itself
+                end
+            end
+            
+            if iType == Enum.UserInputType.Keyboard then
+                -- Keyboard key
+                if kCode == Enum.KeyCode.Escape then
+                    -- Clear keybind
+                    bindInputType = nil
+                    bindKeyCode = nil
+                    bindDisplayName = "None"
                 else
-                    currentKey = io.KeyCode
-                    keyBtn.Text = currentKey.Name
+                    bindInputType = Enum.UserInputType.Keyboard
+                    bindKeyCode = kCode
+                    bindDisplayName = getInputDisplayName(bindInputType, bindKeyCode)
                 end
                 listening = false
+            elseif iType == Enum.UserInputType.MouseButton1
+                or iType == Enum.UserInputType.MouseButton2
+                or iType == Enum.UserInputType.MouseButton3 then
+                -- Mouse button bind
+                bindInputType = iType
+                bindKeyCode = nil
+                bindDisplayName = getInputDisplayName(bindInputType, nil)
+                listening = false
+            end
+            
+            if not listening then
+                keyBtn.Text = bindDisplayName
                 tween(keyStroke, {Color = theme.Divider, Transparency = 0.5}, 0.2, 1)
                 tween(keyBtn, {TextColor3 = theme.TextDim}, 0.2, 1)
-                if flagName then self.flags[flagName] = currentKey end
-                callback(currentKey)
+                if flagName then
+                    self.flags[flagName] = bindKeyCode or bindInputType
+                end
+                callback(bindKeyCode or bindInputType)
             end
-        elseif not gpe and io.KeyCode == currentKey and currentKey ~= Enum.KeyCode.Unknown then
-            -- Fire keybind callback on actual use
-            if config.OnActivate then
-                config.OnActivate()
+            
+        elseif not gpe then
+            -- Fire activation callback when keybind is pressed during gameplay
+            if bindInputType and config.OnActivate then
+                local match = false
+                if bindInputType == Enum.UserInputType.Keyboard then
+                    if io.UserInputType == Enum.UserInputType.Keyboard and io.KeyCode == bindKeyCode then
+                        match = true
+                    end
+                else
+                    -- Mouse button match
+                    if io.UserInputType == bindInputType then
+                        match = true
+                    end
+                end
+                
+                if match then
+                    config.OnActivate()
+                end
             end
         end
     end))
@@ -1959,11 +2299,25 @@ function Aetherial:_addKeybind(tab, config)
         tween(container, {BackgroundTransparency = 0.6}, 0.15, 1)
     end)
     
-    if flagName then self.flags[flagName] = currentKey end
+    if flagName then self.flags[flagName] = bindKeyCode or bindInputType end
     
     local api = {}
-    function api:set(key) currentKey = key; keyBtn.Text = key.Name end
-    function api:get() return currentKey end
+    function api:set(key)
+        if typeof(key) == "EnumItem" then
+            if key.EnumType == Enum.KeyCode then
+                bindInputType = Enum.UserInputType.Keyboard
+                bindKeyCode = key
+            elseif key.EnumType == Enum.UserInputType then
+                bindInputType = key
+                bindKeyCode = nil
+            end
+        end
+        bindDisplayName = getInputDisplayName(bindInputType, bindKeyCode)
+        keyBtn.Text = bindDisplayName
+    end
+    function api:get()
+        return bindKeyCode or bindInputType
+    end
     return api
 end
 
@@ -2126,11 +2480,26 @@ function Aetherial:notify(config)
         Parent = notif
     })
     
+    -- Optional icon
+    local titleOffset = 14
+    if config.Icon then
+        create("ImageLabel", {
+            Name = "NotifIcon",
+            BackgroundTransparency = 1,
+            Size = UDim2.fromOffset(14, 14),
+            Position = UDim2.fromOffset(14, 10),
+            Image = config.Icon,
+            ImageColor3 = accentColor,
+            Parent = notif
+        })
+        titleOffset = 34
+    end
+    
     create("TextLabel", {
         Name = "Title",
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, -24, 0, 18),
-        Position = UDim2.fromOffset(14, 8),
+        Size = UDim2.new(1, -titleOffset - 8, 0, 18),
+        Position = UDim2.fromOffset(titleOffset, 8),
         FontFace = theme.FontBold,
         Text = config.Title or "Aetherial",
         TextSize = 13,
@@ -2196,6 +2565,7 @@ Aetherial.Themes = {
         t.Primary = Color3.fromRGB(60, 130, 255)
         t.PrimaryDark = Color3.fromRGB(40, 90, 200)
         t.PrimaryLight = Color3.fromRGB(100, 170, 255)
+        t.Secondary = Color3.fromRGB(80, 160, 255)
         t.GlowColor = Color3.fromRGB(60, 130, 255)
         return t
     end)(),
@@ -2206,6 +2576,7 @@ Aetherial.Themes = {
         t.Primary = Color3.fromRGB(255, 80, 130)
         t.PrimaryDark = Color3.fromRGB(200, 50, 90)
         t.PrimaryLight = Color3.fromRGB(255, 130, 170)
+        t.Secondary = Color3.fromRGB(255, 120, 160)
         t.GlowColor = Color3.fromRGB(255, 80, 130)
         return t
     end)(),
@@ -2216,6 +2587,7 @@ Aetherial.Themes = {
         t.Primary = Color3.fromRGB(0, 200, 120)
         t.PrimaryDark = Color3.fromRGB(0, 150, 80)
         t.PrimaryLight = Color3.fromRGB(80, 230, 160)
+        t.Secondary = Color3.fromRGB(40, 220, 140)
         t.GlowColor = Color3.fromRGB(0, 200, 120)
         return t
     end)(),
@@ -2226,7 +2598,30 @@ Aetherial.Themes = {
         t.Primary = Color3.fromRGB(255, 140, 50)
         t.PrimaryDark = Color3.fromRGB(220, 100, 20)
         t.PrimaryLight = Color3.fromRGB(255, 180, 100)
+        t.Secondary = Color3.fromRGB(255, 170, 80)
         t.GlowColor = Color3.fromRGB(255, 140, 50)
+        return t
+    end)(),
+    
+    Crimson = (function()
+        local t = {}
+        for k, v in pairs(defaultTheme) do t[k] = v end
+        t.Primary = Color3.fromRGB(220, 40, 40)
+        t.PrimaryDark = Color3.fromRGB(180, 20, 20)
+        t.PrimaryLight = Color3.fromRGB(255, 80, 80)
+        t.Secondary = Color3.fromRGB(255, 60, 60)
+        t.GlowColor = Color3.fromRGB(220, 40, 40)
+        return t
+    end)(),
+    
+    Aqua = (function()
+        local t = {}
+        for k, v in pairs(defaultTheme) do t[k] = v end
+        t.Primary = Color3.fromRGB(0, 200, 200)
+        t.PrimaryDark = Color3.fromRGB(0, 150, 150)
+        t.PrimaryLight = Color3.fromRGB(80, 240, 240)
+        t.Secondary = Color3.fromRGB(40, 220, 220)
+        t.GlowColor = Color3.fromRGB(0, 200, 200)
         return t
     end)(),
 }
