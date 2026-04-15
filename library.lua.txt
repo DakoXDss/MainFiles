@@ -172,7 +172,6 @@ local keyDisplayNames = {
     [Enum.KeyCode.Quote]        = "'",
     [Enum.KeyCode.Comma]        = ",",
     [Enum.KeyCode.Period]       = ".",
-    [Enum.KeyCode.Slash]        = "/",
 }
 
 local function getInputDisplayName(inputType, keyCode)
