@@ -1,3 +1,13 @@
+--[[
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║                      A E T H E R I A L                       ║
+    ║               Premium Roblox UI Library v2.0                 ║
+    ╚═══════════════════════════════════════════════════════════════╝
+    
+    Created: 2026 | Fully custom — circular HSV picker (dollarware style),
+    smooth tweens, animated elements, draggable windows, full keybind
+    support (keyboard + mouse), dropdowns with icons, and more.
+--]]
 
 local Aetherial = {}
 Aetherial.__index = Aetherial
@@ -136,9 +146,6 @@ local inputDisplayNames = {
     [Enum.UserInputType.MouseButton1] = "Mouse1",
     [Enum.UserInputType.MouseButton2] = "Mouse2",
     [Enum.UserInputType.MouseButton3] = "Mouse3",
-    -- Thumbstick
-    [Enum.UserInputType.Thumbstick1] = "Thumbstick1",
-    [Enum.UserInputType.Thumbstick2] = "Thumbstick2",
 }
 
 local keyDisplayNames = {
