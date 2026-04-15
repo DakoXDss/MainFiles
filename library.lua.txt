@@ -136,10 +136,6 @@ local function ripple(button, x, y)
     end)
 end
 
--- ════════════════════════════════════════════════════════════════
--- INPUT DISPLAY NAME HELPER
--- Maps any KeyCode or UserInputType to a clean display name
--- ════════════════════════════════════════════════════════════════
 
 local inputDisplayNames = {
     -- Mouse buttons
